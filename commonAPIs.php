@@ -10,7 +10,7 @@ $apiObj = new commonAPI();
 $requestCode = $obj["requestCode"];
 $projectId = $obj["projectId"];
 if($requestCode == 1){
-    $apis = $apiObj->supervisorDetails($projectId, $obj);
+    $apis = $apiObj->supervisorDetails($projectId);
 }
 else if($requestCode == 99){
     $apis = $apiObj->availableWorkerDetails($obj);

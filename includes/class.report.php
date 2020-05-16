@@ -114,13 +114,13 @@ class REPORTS
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 			
 		$startDate = $obj['startDate'];
-		$endDate = $obj['endDate'];
+		$endDate = ($obj['endDate']) ? $obj['endDate'] : date("Y-m-d");
 		$supervisor = 	$obj['value_supervisorsel'];
 
 		//run the store proc
 		$connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
 
-		$sql = "CALL `sp_productivitySummaryReport`('$startDate', '$endDate', '$supervisor','')";
+		 $sql = "CALL `sp_productivitySummaryReport`('$startDate', '$endDate', '$supervisor','')";
 		$result = mysqli_query($connection, $sql);
 		$resultset = array();
 		$column = array();

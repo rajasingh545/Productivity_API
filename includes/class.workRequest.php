@@ -55,6 +55,59 @@ class WORKREQUESTS
 		return $this->common->arrayToJson($returnval);
     }
 
+    function updateWorkRequest($postArr){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		
+       
+			$insertArr["projectId"]=trim($postArr["value_projects"]);
+			$insertArr["clientId"]=trim($postArr["value_clients"]);
+			$insertArr["status"]=trim($postArr["status"]);
+            $insertArr["requestedBy"]=trim($postArr["requestBy"]);
+            $insertArr["description"]=trim($postArr["description"]);
+			$insertArr["contractType"]=trim($postArr["cType"]);		
+            $insertArr["remarks"]=trim($postArr["remarks"]);
+            $insertArr["scaffoldRegister"] = trim($postArr["scaffoldRegister"]);
+			$insertArr["createdOn"]=date("Y-m-d H:i:s");
+			$insertArr["createdBy"]=trim($postArr["userId"]);	
+
+			
+            $dbm = new DB;
+            $workReqId = $postArr["listingId"];
+			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+			$whereClause = "workRequestId=".$workReqId;
+            
+            $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$insertArr,$whereClause);
+
+            $delete1 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTITEMS"],$whereClause);
+            $delete2 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$whereClause);
+            $delete3 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTMANPOWER"],$whereClause);
+
+			
+            if(trim($postArr["cType"]) == 1){ //if its original contarct
+                $this->insertItemList($postArr, $workReqId);
+            }
+            if(trim($postArr["cType"]) == 2){ //if its variaion works
+                $this->insertVariationWorks($postArr, $workReqId);
+            }
+            
+			
+			$dbm->dbClose();
+			// if($insid == 0 || $insid == ''){ 
+			// 	$returnval["response"] ="fail";
+			// 	$returnval["responsecode"] = 0; 
+			// }else { 
+				
+            $returnval["response"] ="success";
+            $returnval["responsecode"] = 1; 
+            // $invID = str_pad($insid, 4, '0', STR_PAD_LEFT);
+            // $returnval["id"] = $invID;
+				
+				
+				// }
+		
+		return $this->common->arrayToJson($returnval);
+    }
+
     function insertVariationWorks($postArr, $insid){
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
         $dbm = new DB;
@@ -77,13 +130,14 @@ class WORKREQUESTS
                     $insertSizeArr["itemListId"] = $insid2;
                     $insertSizeArr["scaffoldType"] = $itemList["value_scaffoldType"];
                     $insertSizeArr["scaffoldWorkType"] = $itemList["value_scaffoldWorkType"];
-                    $insertSizeArr["scaffoldSubCategory"] = $itemList["value_scaffoldSubCategory"];
+                    $insertSizeArr["scaffoldSubCategory"] = $itemList["value_scaffoldSubcategory"];
                     $insertSizeArr["length"] = $itemList["L"];
                     $insertSizeArr["height"] = $itemList["H"];
                     $insertSizeArr["width"] = $itemList["W"];
                     $insertSizeArr["setcount"] = $itemList["set"];
                     $insertSizeArr["createdOn"] = date("Y-m-d H:i:s");
                     $insertSizeArr["ItemUniqueId"]=$wrUniqueId;
+                   
                     $insid3 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$insertSizeArr,1,2);
                     $i++;
                 }
@@ -201,7 +255,7 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description");
+		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status");
     	$whereClause = "workRequestId='".$postArr["listingId"]."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
 		// pr($db);
@@ -216,6 +270,7 @@ class WORKREQUESTS
                 $itemList = $db->fetchArray($resitem[0],1);
                 $k=0;
                 $a =0;
+                $b=0;
                 foreach($itemList as $item){
 
                     if($item["workBased"] == 1){
@@ -230,7 +285,7 @@ class WORKREQUESTS
                             foreach($sizeList as $sizeDet){
                                 
                                 $requestArr["requestSizeList"][$a] = $sizeDet;
-                                if($item["contractType"] == 2)
+                                // if($item["contractType"] == 2)
                                     $a++;
                             }
                            
@@ -247,14 +302,14 @@ class WORKREQUESTS
                             $manList = $db->fetchArray($resMan[0],1);
                             $j=0;
                             foreach($manList as $manDet){
-                                $requestArr["requestManList"][$a] = $manDet;
-                                if($item["contractType"] == 2)
-                                    $a++;
+                                $requestArr["requestManList"][$b] = $manDet;
+                                // if($item["contractType"] == 2)
+                                    $b++;
                             }
                         }
                     }
                     $k++;
-                    $a++;
+                    // $a++;
                 }
             }
         }

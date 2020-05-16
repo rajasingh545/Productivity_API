@@ -16,9 +16,18 @@ class REQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
+		$userID = $postArr["userId"];
+		$userType = $postArr["userType"];
 		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks");
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
-			$addCond = "createdOn='".$postArr["startDate"]."'";
+			if($userType == 1){
+				$addCond = "createdOn='".$postArr["startDate"]."'";
+			}
+			else{
+				$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID or addSupervsor= $userID)";
+				
+			}
+			
 		}
 		else{
 			$addCond = "createdOn='".date("Y-m-d")."'";
@@ -30,7 +39,7 @@ class REQUESTS
 		if($res[1] > 0){
 			$projectArr = $db->fetchArray($res[0], 1);
 			foreach($projectArr as $key=>$det){
-				$whereClause2 = "workArrangementId=".$det["workArrangementId"];
+				$whereClause2 = "workArrangementId=".$det["workArrangementId"]." and isSupervisor !=1";
 				$selectFileds2 = array("workerId");
 				$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
 				$listingDetails = array();
@@ -178,8 +187,13 @@ class REQUESTS
 			$whereClause = "workArrangementId = ".$postArr["listingId"]." and projectId = ".$postArr["projectId"]." and status = 1";
 		}	
 		else{
+			$userID = $postArr["userId"];
+			$addCond = "and (baseSupervsor = $userID or addSupervsor= $userID)";
+			if($postArr["userType"] == 1){
+				$addCond= "";
+			}
 			if($postArr["startDate"]){
-				$whereClause = "projectId = ".$postArr["projectId"]." and status = 1 and createdOn='".$postArr["startDate"]."'";
+				$whereClause = "projectId = ".$postArr["projectId"]." and status = 1 and createdOn='".$postArr["startDate"]."' $addCond";
 			}
 			else{
 				$whereClause = "projectId = ".$postArr["projectId"]." and status = 1 and createdOn='".date("Y-m-d")."'";
@@ -332,7 +346,10 @@ class REQUESTS
 			
 			// tracking supervisor attendance
 			$this->insertSupervisorAttendance($insid, $postArr["value_supervisors"], $postArr["startDate"]);
-			$this->insertSupervisorAttendance($insid, $postArr["value_supervisors2"], $postArr["startDate"]);
+			if(trim($postArr["value_supervisors2"]) != ""){
+				$this->insertSupervisorAttendance($insid, $postArr["value_supervisors2"], $postArr["startDate"]);
+			}
+			
 
 			//tracking wrokers attendance
 			foreach($postArr["workerIds"] as $value){

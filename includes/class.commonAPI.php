@@ -26,6 +26,7 @@ class commonAPI
         $allDetails["subCategory"] = $this->subCategoryDetails();
 		$allDetails["supervisorsList"] = $this->allSupervisorDetails();
 		$allDetails["workRequestList"] = $this->getWorkRequestIDList();
+		$allDetails["availableWorkers"] = $this->availableWorkerDetails($obj);
 		// $allDetails["allprojects"] = $this->allProjectDetails();
 		// $allDetails["requestDetails"] = $this->requestDetails();
         
@@ -190,10 +191,20 @@ class commonAPI
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		$whereClauseat = "forDate='".date("Y-m-d")."' and partial=0";
+
+		//get workArrangement workers to include
+
+		$workArrangmentId = $postArr["listingId"];
+		$addWhere = "";
+		if(trim($workArrangmentId ) != ""){
+			$addWhere = " and workArrangementId != $workArrangmentId";
+		}
+
+
+		$whereClauseat = "forDate='".date("Y-m-d")."' and partial=0 $addWhere";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and partial=0";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and partial=0 $addWhere";
 		}
 		// echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
@@ -233,8 +244,9 @@ class commonAPI
 		else{
 			$newWorkerArr=array(); 
 		}
-		$avalableWorker["availableWorkers"] = $newWorkerArr;
-		return $this->common->arrayToJson($avalableWorker);
+		// $avalableWorker["availableWorkers"] = $newWorkerArr;
+		// return $this->common->arrayToJson($avalableWorker);
+		return $newWorkerArr;
 	}
 	function allSupervisorDetails(){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
@@ -288,7 +300,7 @@ class commonAPI
 		
 		if(count($assignedWorkers) > 0){
 
-		$whereClause = "project like '%$pid%' and userStatus=1 and userId NOT IN(".implode(",",$assignedWorkers).")";
+		 $whereClause = "project like '%$pid%' and userStatus=1 and userId NOT IN(".implode(",",$assignedWorkers).")";
 		}
 		else{
 			$whereClause = "project like '%$pid%' and userStatus=1 ";

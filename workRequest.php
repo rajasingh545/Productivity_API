@@ -30,6 +30,9 @@ elseif($obj["requestCode"] === 18){
 elseif($obj["requestCode"] === 19){
     $response = $requestObj->getDailyWorkTrackDetails($obj);
 }
+elseif($obj["requestCode"] === 21){
+    $response = $requestObj->updateWorkRequest($obj);
+}
 
 if($_POST["requestCode"] == 20){
     $response = $requestObj->imageUploads($_POST);
