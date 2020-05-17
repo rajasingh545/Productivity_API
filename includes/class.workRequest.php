@@ -366,95 +366,24 @@ class WORKREQUESTS
            $insertArr["uniqueId"] = trim($postArr["uniqueId"]);
         
 
-			
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 			
             $insid = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$insertArr,1,2);
           
 			if($insid != 0 && $insid != ''){ 
-                foreach($postArr["itemList"] as $item){
+                
+                $insid2 = $this->insertDWTRItemList($postArr,$insid, $dbm, $dbcon);
 
-                    $insertArr2["workTrackId"]=$insid;
-                    $insertArr2["subDivisionId"]=trim($item["value_subdivision"]);
-                    $insertArr2["timing"]=trim($postArr["timing"]);
-                    $insertArr2["length"]=trim($item["L"]);
-                    $insertArr2["height"]=trim($item["H"]);
-                    $insertArr2["width"]=trim($item["W"]);
-                    $insertArr2["setcount"]=trim($item["set"]);
-                    $insertArr2["status"]=trim($item["value_workstatus"]);
-                    $insertArr2["cLength"]=trim($item["cL"]);
 
-                    $insertArr2["cHeight"]=trim($item["cH"]);
-                    $insertArr2["cWidth"]=trim($item["cW"]);
-                    $insertArr2["cSetcount"]=trim($item["cset"]);
-                    $insertArr2["diffSubDivision"]=trim($item["value_subdivision2"]);
-                    $insertArr2["createdOn"]=date("Y-m-d H:i:s");
-                    
+                if($insid2 != 0 && $insid2 != ''){ 
 
-                    $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$insertArr2,1,2);
-                }
-                    if($insid2 != 0 && $insid2 != ''){ 
-
-                        if($postArr["timing"] == 1){ //same timing
-
-                            foreach($postArr["itemList"] as $item1){
-                                
-                                foreach($postArr["teamList"] as $team){                                  
-                                        $insertArrTeam["workTrackId"]=$insid;
-                                        $insertArrTeam["subDevisionId"]=$item1["value_subdivision"];
-                                        $insertArrTeam["teamId"]=trim($team["value_team"]);
-                                        $insertArrTeam["workerCount"]=trim($team["workerCount"]);
-                                        $insertArrTeam["inTime"]=trim($team["inTime"]);
-                                        $insertArrTeam["outTime"]=trim($team["outTime"]);
-                                        $insertArrTeam["createdOn"]=date("Y-m-d H:i:s");
-                                        $insid3 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$insertArrTeam,1,2);
-                                }
-                           
-                                foreach($postArr["materialList"] as $material){
-                                    $insertArrMaterial["workTrackId"]=$insid;
-                                    $insertArrMaterial["subDevisionId"]=$item1["value_subdivision"];
-                                    $insertArrMaterial["material"]=trim($material["value_materials"]);
-                                    $insertArrMaterial["workerCount"]=trim($material["mWorkerCount"]);
-                                    $insertArrMaterial["inTime"]=trim($material["minTime"]);
-                                    $insertArrMaterial["outTime"]=trim($material["moutTime"]);
-                                    $insertArrMaterial["createdOn"]=date("Y-m-d H:i:s");
-                                    $insid4 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$insertArrMaterial,1,2);
-                                
-                                }
-                            }
-
-                        }
-                        else{ //different timing
-                        
-                            if(count($postArr["teamList"]) > 0){
-                                foreach($postArr["teamList"] as $team){
-                                    $insertArrTeam["workTrackId"]=$insid;
-                                    $insertArrTeam["subDevisionId"]=$team["value_subdivision2"];
-                                    $insertArrTeam["teamId"]=trim($team["value_team"]);
-                                    $insertArrTeam["workerCount"]=trim($team["workerCount"]);
-                                    $insertArrTeam["inTime"]=trim($team["inTime"]);
-                                    $insertArrTeam["outTime"]=trim($team["outTime"]);
-                                    $insertArrTeam["createdOn"]=date("Y-m-d H:i:s");
-                                    $insid3 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$insertArrTeam,1,2);
-                                }
-                            }
-                            if(count($postArr["materialList"]) > 0){
-                                foreach($postArr["materialList"] as $material){
-                                    $insertArrMaterial["workTrackId"]=$insid;
-                                    $insertArrMaterial["subDevisionId"]=$material["value_subdivision2"];
-                                    $insertArrMaterial["material"]=trim($material["value_materials"]);
-                                    $insertArrMaterial["workerCount"]=trim($material["mWorkerCount"]);
-                                    $insertArrMaterial["inTime"]=trim($material["minTime"]);
-                                    $insertArrMaterial["outTime"]=trim($material["moutTime"]);
-                                    $insertArrMaterial["createdOn"]=date("Y-m-d H:i:s");
-                                    $insid4 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$insertArrMaterial,1,2);
-                                }
-                            }
-
-                        }
-                    
-
+                    if($postArr["timing"] == 1){ //same timing
+                        $this->insertSameTiming($postArr, $insid, $dbm, $dbcon);
+                    }
+                    else{ //different timing
+                        $this->insertDifferentTiming($postArr, $insid, $dbm, $dbcon);
+                    }
                 }
             }
 			
@@ -471,6 +400,158 @@ class WORKREQUESTS
 				}
 		
 		return $this->common->arrayToJson($returnval);
+    }
+
+    function updateDailyWorkTrack($postArr){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		
+       
+			$insertArr["projectId"]=trim($postArr["value_projects"]);
+			$insertArr["clientId"]=trim($postArr["value_clients"]);
+			$insertArr["type"]=trim($postArr["cType"]);;
+			$insertArr["requestedBy"]=trim($postArr["requestBy"]);
+            $insertArr["remarks"]=trim($postArr["remarks"]);
+            $insertArr["workRequestId"] = trim($postArr["value_wrno"]);
+            $insertArr["photo_1"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_1");
+            $insertArr["photo_2"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_2");
+            $insertArr["photo_3"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_3");
+            $insertArr["supervisor"]=trim($postArr["value_supervisor"]);
+            	
+            $insertArr["baseSupervisor"]=trim($postArr["value_basesupervisor"]);
+             $insertArr["matMisuse"]=trim($postArr["matMisuse"]);
+            $insertArr["matRemarks"] = trim($postArr["matmisueremarks"]);
+			$insertArr["matPhotos"]=$this->fileGetContents(trim($postArr["uniqueId"]),"matPhotos");
+            $insertArr["safetyVio"]=trim($postArr["safetyvio"]);
+            $insertArr["safetyRemarks"]=trim($postArr["safetyvioremarks"]);	
+            $insertArr["safetyPhoto"]=$this->fileGetContents(trim($postArr["uniqueId"]),"safetyPhoto");
+           $insertArr["createdOn"] = date("Y-m-d H:i:s");	
+           $insertArr["status"] = trim($postArr["listingstatus"]);
+           $insertArr["uniqueId"] = trim($postArr["uniqueId"]);
+        
+           $worktrackId = $postArr["listingId"];
+			$dbm = new DB;
+            $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+            $whereClause = "worktrackId=".$worktrackId;
+
+
+			
+            $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$insertArr, $whereClause);
+
+            $delete1 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$whereClause);
+            $delete2 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$whereClause);
+            $delete3 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$whereClause);
+
+            $insid2 = $this->insertDWTRItemList($postArr,$worktrackId , $dbm, $dbcon);
+            if($insid2 != 0 && $insid2 != ''){ 
+
+                if($postArr["timing"] == 1){ //same timing
+                    $this->insertSameTiming($postArr, $worktrackId, $dbm, $dbcon);
+                }
+                else{ //different timing
+                    $this->insertDifferentTiming($postArr, $worktrackId, $dbm, $dbcon);
+                }
+            }
+         
+			
+			$dbm->dbClose();
+			
+            $returnval["response"] ="success";
+            $returnval["responsecode"] = 1; 
+				
+				
+			
+		
+		return $this->common->arrayToJson($returnval);
+    }
+
+    function insertDWTRItemList($postArr, $insid, $dbm, $dbcon){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+
+        foreach($postArr["itemList"] as $item){
+
+            $insertArr2["workTrackId"]=$insid;
+            $insertArr2["subDivisionId"]=trim($item["value_subdivision"]);
+            $insertArr2["timing"]=trim($postArr["timing"]);
+            $insertArr2["length"]=trim($item["L"]);
+            $insertArr2["height"]=trim($item["H"]);
+            $insertArr2["width"]=trim($item["W"]);
+            $insertArr2["setcount"]=trim($item["set"]);
+            $insertArr2["status"]=trim($item["value_workstatus"]);
+            $insertArr2["cLength"]=trim($item["cL"]);
+
+            $insertArr2["cHeight"]=trim($item["cH"]);
+            $insertArr2["cWidth"]=trim($item["cW"]);
+            $insertArr2["cSetcount"]=trim($item["cset"]);
+            $insertArr2["diffSubDivision"]=trim($item["value_subdivision2"]);
+            $insertArr2["createdOn"]=date("Y-m-d H:i:s");
+            
+
+            $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$insertArr2,1,2);
+           
+        }
+
+        return $insid2;
+    }
+
+    function insertSameTiming($postArr, $insid, $dbm, $dbcon){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+
+        foreach($postArr["itemList"] as $item1){
+                                
+            foreach($postArr["teamList"] as $team){                                  
+                    $insertArrTeam["workTrackId"]=$insid;
+                    $insertArrTeam["subDevisionId"]=$item1["value_subdivision"];
+                    $insertArrTeam["teamId"]=trim($team["value_team"]);
+                    $insertArrTeam["workerCount"]=trim($team["workerCount"]);
+                    $insertArrTeam["inTime"]=trim($team["inTime"]);
+                    $insertArrTeam["outTime"]=trim($team["outTime"]);
+                    $insertArrTeam["createdOn"]=date("Y-m-d H:i:s");
+                    $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$insertArrTeam,1,2);
+            }
+       
+            foreach($postArr["materialList"] as $material){
+                $insertArrMaterial["workTrackId"]=$insid;
+                $insertArrMaterial["subDevisionId"]=$item1["value_subdivision"];
+                $insertArrMaterial["material"]=trim($material["value_materials"]);
+                $insertArrMaterial["workerCount"]=trim($material["mWorkerCount"]);
+                $insertArrMaterial["inTime"]=trim($material["minTime"]);
+                $insertArrMaterial["outTime"]=trim($material["moutTime"]);
+                $insertArrMaterial["createdOn"]=date("Y-m-d H:i:s");
+                $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$insertArrMaterial,1,2);
+            
+            }
+        }
+        
+    }
+
+    function insertDifferentTiming($postArr, $insid, $dbm, $dbcon){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+
+        if(count($postArr["teamList"]) > 0){
+            foreach($postArr["teamList"] as $team){
+                $insertArrTeam["workTrackId"]=$insid;
+                $insertArrTeam["subDevisionId"]=$team["value_subdivision2"];
+                $insertArrTeam["teamId"]=trim($team["value_team"]);
+                $insertArrTeam["workerCount"]=trim($team["workerCount"]);
+                $insertArrTeam["inTime"]=trim($team["inTime"]);
+                $insertArrTeam["outTime"]=trim($team["outTime"]);
+                $insertArrTeam["createdOn"]=date("Y-m-d H:i:s");
+                $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$insertArrTeam,1,2);
+            }
+        }
+        if(count($postArr["materialList"]) > 0){
+            foreach($postArr["materialList"] as $material){
+                $insertArrMaterial["workTrackId"]=$insid;
+                $insertArrMaterial["subDevisionId"]=$material["value_subdivision2"];
+                $insertArrMaterial["material"]=trim($material["value_materials"]);
+                $insertArrMaterial["workerCount"]=trim($material["mWorkerCount"]);
+                $insertArrMaterial["inTime"]=trim($material["minTime"]);
+                $insertArrMaterial["outTime"]=trim($material["moutTime"]);
+                $insertArrMaterial["createdOn"]=date("Y-m-d H:i:s");
+                $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$insertArrMaterial,1,2);
+            }
+        }
+
     }
 
     function getDailyWorkTrackList($postArr){
@@ -505,7 +586,7 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","type","remarks","workRequestId","supervisor","matMisuse","matRemarks","safetyVio","safetyRemarks","photo_1","photo_2","photo_3", "safetyPhoto", "matPhotos","uniqueId","baseSupervisor");
+		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","type","remarks","workRequestId","supervisor","matMisuse","matRemarks","safetyVio","safetyRemarks","photo_1","photo_2","photo_3", "safetyPhoto", "matPhotos","uniqueId","baseSupervisor","status");
     	$whereClause = "worktrackId='".$postArr["listingId"]."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$selectFileds,$whereClause);
 		// pr($db);
@@ -571,6 +652,7 @@ class WORKREQUESTS
     function imageUploads($postArr){
         $errors = "";
         if(isset($_FILES['image'])){
+           
             $errors= array();
             $file_name = $_FILES['image']['name'];
             $file_size =$_FILES['image']['size'];
@@ -588,14 +670,19 @@ class WORKREQUESTS
             if($file_size > 2097152){
                $errors='File size must be excately 2 MB';
             }
-            
-        
 
             if(trim($errors) == ""){
+               
                 mkdir("images/".$postArr["uniqueId"]);
-                move_uploaded_file($file_tmp,"images/".$postArr["uniqueId"]."/".$postArr["imagefor"].".".$file_ext_orginal);
-                $returnval["response"] ="success";
-				$returnval["responsecode"] = 1; 
+                if(move_uploaded_file($file_tmp,"images/".$postArr["uniqueId"]."/".$postArr["imagefor"].".".$file_ext_orginal)){
+                    $returnval["response"] ="success";
+                    $returnval["responsecode"] = 1; 
+                }
+                else{
+                    $returnval["response"] ="error";
+				$returnval["responsecode"] = 0; 
+                }
+               
             }else{
                 $returnval["response"] =$errors;
 				$returnval["responsecode"] = 0; 
