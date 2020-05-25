@@ -188,15 +188,16 @@ class WORKREQUESTS
                 if($insid2 != 0 && $insid2 != ''){
                    
                     if($itemList["workBased"] == 1){ //size
+                        $sizeList = $postArr["sizeList"][0];
                         $insertSizeArr["workRequestId"] = $insid;
                         $insertSizeArr["itemListId"] = $insid2;
-                        $insertSizeArr["scaffoldType"] = $itemList["value_scaffoldType"];
-                        $insertSizeArr["scaffoldWorkType"] = $itemList["value_scaffoldWorkType"];
-                        $insertSizeArr["scaffoldSubCategory"] = $itemList["value_scaffoldSubcategory"];
-                        $insertSizeArr["length"] = $itemList["L"];
-                        $insertSizeArr["height"] = $itemList["H"];
-                        $insertSizeArr["width"] = $itemList["W"];
-                        $insertSizeArr["setcount"] = $itemList["set"];
+                        $insertSizeArr["scaffoldType"] = $sizeList["value_scaffoldType"];
+                        $insertSizeArr["scaffoldWorkType"] = $sizeList["value_scaffoldWorkType"];
+                        $insertSizeArr["scaffoldSubCategory"] = $sizeList["value_scaffoldSubcategory"];
+                        $insertSizeArr["length"] = $sizeList["L"];
+                        $insertSizeArr["height"] = $sizeList["H"];
+                        $insertSizeArr["width"] = $sizeList["W"];
+                        $insertSizeArr["setcount"] = $sizeList["set"];
                         $insertSizeArr["ItemUniqueId"]=$wrUniqueId;
                         $insertSizeArr["createdOn"] = date("Y-m-d H:i:s");
                        
@@ -204,14 +205,15 @@ class WORKREQUESTS
                        
                     }
                     if($itemList["workBased"] == 2){ //manpower
+                        $manpowerList = $postArr["manpowerList"][0];
                         $insertManPowerArr["workRequestId"] = $insid;
                         $insertManPowerArr["itemListId"] = $insid2;
-                        $insertManPowerArr["safety"] = $itemList["safety"];
-                        $insertManPowerArr["supervisor"] = $itemList["supervisor"];
-                        $insertManPowerArr["erectors"] = $itemList["erectors"];
-                        $insertManPowerArr["generalWorker"] = $itemList["gworkers"];
-                        $insertManPowerArr["timeIn"] = $itemList["inTime"];
-                        $insertManPowerArr["timeOut"] = $itemList["outTime"];
+                        $insertManPowerArr["safety"] = $manpowerList["safety"];
+                        $insertManPowerArr["supervisor"] = $manpowerList["supervisor"];
+                        $insertManPowerArr["erectors"] = $manpowerList["erectors"];
+                        $insertManPowerArr["generalWorker"] = $manpowerList["gworkers"];
+                        $insertManPowerArr["timeIn"] = $manpowerList["inTime"];
+                        $insertManPowerArr["timeOut"] = $manpowerList["outTime"];
                         $insertManPowerArr["createdOn"] = date("Y-m-d H:i:s");
                         $insertManPowerArr["ItemUniqueId"]=$wrUniqueId;
                         $insid4 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTMANPOWER"],$insertManPowerArr,1,2);
