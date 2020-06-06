@@ -172,7 +172,6 @@ class WORKREQUESTS
 
         foreach($postArr["itemList"] as $itemList){
 
-          
 
             $insertItemArr["workRequestId"] = $insid;
             $insertItemArr["contractType"] = trim($postArr["cType"]);
@@ -188,7 +187,7 @@ class WORKREQUESTS
                 if($insid2 != 0 && $insid2 != ''){
                    
                     if($itemList["workBased"] == 1){ //size
-                        $sizeList = $postArr["sizeList"][0];
+                        $sizeList = $itemList["sizeList"][0];
                         $insertSizeArr["workRequestId"] = $insid;
                         $insertSizeArr["itemListId"] = $insid2;
                         $insertSizeArr["scaffoldType"] = $sizeList["value_scaffoldType"];
@@ -205,7 +204,8 @@ class WORKREQUESTS
                        
                     }
                     if($itemList["workBased"] == 2){ //manpower
-                        $manpowerList = $postArr["manpowerList"][0];
+                        $manpowerList = $itemList["manpowerList"][0];
+                        
                         $insertManPowerArr["workRequestId"] = $insid;
                         $insertManPowerArr["itemListId"] = $insid2;
                         $insertManPowerArr["safety"] = $manpowerList["safety"];
@@ -287,6 +287,7 @@ class WORKREQUESTS
                             foreach($sizeList as $sizeDet){
                                 
                                 $requestArr["requestSizeList"][$a] = $sizeDet;
+                                $requestArr["requestItems"][$k]["sizeList"] = $sizeDet;
                                 // if($item["contractType"] == 2)
                                     $a++;
                             }
@@ -305,6 +306,7 @@ class WORKREQUESTS
                             $j=0;
                             foreach($manList as $manDet){
                                 $requestArr["requestManList"][$b] = $manDet;
+                                $requestArr["requestItems"][$k]["manpowerList"] = $manDet;
                                 // if($item["contractType"] == 2)
                                     $b++;
                             }
