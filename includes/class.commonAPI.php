@@ -201,10 +201,12 @@ class commonAPI
 		}
 
 
-		$whereClauseat = "forDate='".date("Y-m-d")."' and partial=0 $addWhere";
+		//$whereClauseat = "forDate='".date("Y-m-d")."' and partial=0 $addWhere";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and outTime='00:00:00' and partial=0 $addWhere";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and partial=0 $addWhere";
+			//$whereClauseat = "forDate='".$postArr["startDate"]."' and partial=0 $addWhere";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and outTime='00:00:00' and partial=0 $addWhere";
 		}
 		// echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
@@ -270,17 +272,16 @@ class commonAPI
 		return $vehiclesArr;
 	}
 
-	
-    function supervisorDetails($pid, $postArr){
+	function supervisorDetails($pid, $postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
 
-		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=1";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and outTime='00:00:00' and isSupervisor=1";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and isSupervisor=1";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and outTime='00:00:00' and isSupervisor=1";
 		}
 		// echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
