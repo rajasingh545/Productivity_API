@@ -21,6 +21,9 @@ else if($requestCode == 5){
 else if($requestCode == 6){
     $apis = $apiObj->getWorkRequestList($obj);
 }
+else if($requestCode == 7){
+    $apis = $apiObj->getProjectWiseSupervisor($projectId);
+}
 else{
     $apis = $apiObj->commonAPIs($obj);
 }

@@ -318,6 +318,28 @@ class commonAPI
 		
 		return $this->common->arrayToJson($vehiclesArr);
 	}
+
+	function getProjectWiseSupervisor($projectId){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+
+		$whereClause = "project like '%$projectId%' and userStatus=1 ";
+		$selectFileds=array("userId","Name");
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
+		$supervisors = array();
+		if($res[1] > 0){
+			$supervisors["supervisors"] = $db->fetchArray($res[0], 1);          	
+			
+		}
+		else{
+			$supervisors["supervisors"]=array(); 
+		}
+		
+		return $this->common->arrayToJson($supervisors);
+
+	}
+
     function categoryDetails(){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;

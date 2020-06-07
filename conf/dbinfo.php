@@ -34,6 +34,8 @@ $TABLEINFO["DAILYWORKTRACKMATERIALS"] = "p_dailyworktrackmaterials";
 $TABLEINFO["TRANSFERHISTORY"] = "v_transferhistory";
 $TABLEINFO["PROJECTREPORT"] = "v_projectreport";
 $TABLEINFO["MISATCHALERT"] = "v_misatchalert";
+$TABLEINFO["DWTRPHOTOS"] = "p_dwtrPhotos";
+
 $SERVERS['DBHOST_MASTER'] = "localhost";
 $SERVERS['DBHOST_SLAVE'] = "localhost";
 

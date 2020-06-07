@@ -353,11 +353,7 @@ class WORKREQUESTS
 			$insertArr["requestedBy"]=trim($postArr["requestBy"]);
             $insertArr["remarks"]=trim($postArr["remarks"]);
             $insertArr["workRequestId"] = trim($postArr["value_wrno"]);
-            $insertArr["photo_1"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_1");
-            $insertArr["photo_2"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_2");
-            $insertArr["photo_3"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_3");
             $insertArr["supervisor"]=trim($postArr["value_supervisor"]);
-            	
             $insertArr["baseSupervisor"]=trim($postArr["value_basesupervisor"]);
              $insertArr["matMisuse"]=trim($postArr["matMisuse"]);
             $insertArr["matRemarks"] = trim($postArr["matmisueremarks"]);
@@ -377,18 +373,14 @@ class WORKREQUESTS
           
 			if($insid != 0 && $insid != ''){ 
                 
-                $insid2 = $this->insertDWTRItemList($postArr,$insid, $dbm, $dbcon);
-
-
-                if($insid2 != 0 && $insid2 != ''){ 
-
-                    if($postArr["timing"] == 1){ //same timing
-                        $this->insertSameTiming($postArr, $insid, $dbm, $dbcon);
-                    }
-                    else{ //different timing
-                        $this->insertDifferentTiming($postArr, $insid, $dbm, $dbcon);
-                    }
+                // insert photos for Others
+                if($postArr["cType"] == 2){
+                   
+                    $this->insertPhotos($postArr, $insid, 0, $postArr["uniqueId"], $dbm, $dbcon);
                 }
+               
+                $insid2 = $this->insertDWTRItemList($postArr,$insid, $dbm, $dbcon);
+                $this->insertDifferentTiming($postArr, $insid, $dbm, $dbcon);
             }
 			
 			$dbm->dbClose();
@@ -486,8 +478,9 @@ class WORKREQUESTS
             $insertArr2["cHeight"]=trim($item["cH"]);
             $insertArr2["cWidth"]=trim($item["cW"]);
             $insertArr2["cSetcount"]=trim($item["cset"]);
-            $insertArr2["diffSubDivision"]=trim($item["value_subdivision2"]);
             $insertArr2["createdOn"]=date("Y-m-d H:i:s");
+
+            $this->insertPhotos($postArr, $insid, trim($item["value_subdivision"]), $item["uniqueId"], $dbm, $dbcon);
             
 
             $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$insertArr2,1,2);
@@ -534,7 +527,7 @@ class WORKREQUESTS
         if(count($postArr["teamList"]) > 0){
             foreach($postArr["teamList"] as $team){
                 $insertArrTeam["workTrackId"]=$insid;
-                $insertArrTeam["subDevisionId"]=$team["value_subdivision2"];
+                $insertArrTeam["subDevisionId"]=$team["subdivision"];
                 $insertArrTeam["teamId"]=trim($team["value_team"]);
                 $insertArrTeam["workerCount"]=trim($team["workerCount"]);
                 $insertArrTeam["inTime"]=trim($team["inTime"]);
@@ -546,11 +539,11 @@ class WORKREQUESTS
         if(count($postArr["materialList"]) > 0){
             foreach($postArr["materialList"] as $material){
                 $insertArrMaterial["workTrackId"]=$insid;
-                $insertArrMaterial["subDevisionId"]=$material["value_subdivision2"];
+                $insertArrMaterial["subDevisionId"]=$material["subdivision"];
                 $insertArrMaterial["material"]=trim($material["value_materials"]);
-                $insertArrMaterial["workerCount"]=trim($material["mWorkerCount"]);
-                $insertArrMaterial["inTime"]=trim($material["minTime"]);
-                $insertArrMaterial["outTime"]=trim($material["moutTime"]);
+                $insertArrMaterial["workerCount"]=trim($material["workerCount"]);
+                $insertArrMaterial["inTime"]=trim($material["inTime"]);
+                $insertArrMaterial["outTime"]=trim($material["outTime"]);
                 $insertArrMaterial["createdOn"]=date("Y-m-d H:i:s");
                 $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$insertArrMaterial,1,2);
             }
@@ -612,45 +605,78 @@ class WORKREQUESTS
                 $itemList = $db->fetchArray($resitem[0],1);
                 $k=0;
                 foreach($itemList as $item){
-                       
+                        $photos = $this->getDWTRPhotos($item["workTrackId"], $item["subDivisionId"]);
+                        $item["photo_1"] = $photos["photo_1"];
+                        $item["photo_2"] = $photos["photo_2"];
+                        $item["photo_3"] = $photos["photo_3"];
                         $requestArr["requestItems"][$k] = $item;
                         $k++;
                 }
-                $selectFiledsSize=array("id","subDevisionId","workTrackId","teamId","workerCount","inTime","outTime");
-                $whereClauseSize = "workTrackId='".$postArr["listingId"]."'";
-                $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$selectFiledsSize,$whereClauseSize);
-                if($resSize[1] > 0){
-                    $sizeList = $db->fetchArray($resSize[0],1);
-                    $i=0;
-                    foreach($sizeList as $sizeDet){
-                        $requestArr["requestSizeList"][$i] = $sizeDet;
-                        $i++;
-                    }
-                    
+            }
+            $selectFiledsSize=array("id","subDevisionId","workTrackId","teamId","workerCount","inTime","outTime");
+            $whereClauseSize = "workTrackId='".$postArr["listingId"]."'";
+            $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$selectFiledsSize,$whereClauseSize);
+            if($resSize[1] > 0){
+                $sizeList = $db->fetchArray($resSize[0],1);
+                $i=0;
+                foreach($sizeList as $sizeDet){
+                    $requestArr["requestSizeList"][$i] = $sizeDet;
+                    $i++;
                 }
-                   
-
-                $selectFiledsMan=array("id","workTrackId","subDevisionId","material","workerCount","inTime","outTime");
-                $whereClauseMan = "workTrackId='".$postArr["listingId"]."'";
-                $resMan=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$selectFiledsMan,$whereClauseMan);
-                
-
-                if($resMan[1] > 0){
-                    $manList = $db->fetchArray($resMan[0],1);
-                    $j=0;
-                    foreach($manList as $manDet){
-                        $requestArr["requestMatList"][$j] = $manDet;
-                        $j++;
-                    }
-                }
-                    
-                   
                 
             }
+                
+
+            $selectFiledsMan=array("id","workTrackId","subDevisionId","material","workerCount","inTime","outTime");
+            $whereClauseMan = "workTrackId='".$postArr["listingId"]."'";
+            $resMan=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$selectFiledsMan,$whereClauseMan);
+            
+
+            if($resMan[1] > 0){
+                $manList = $db->fetchArray($resMan[0],1);
+                $j=0;
+                foreach($manList as $manDet){
+                    $requestArr["requestMatList"][$j] = $manDet;
+                    $j++;
+                }
+            }
+                
+            
         }
         
         return $this->common->arrayToJson($requestArr);
 
+    }
+
+    function insertPhotos($postArr, $dwtrId, $WRSubdivision, $uniqueId, $dbm, $dbcon) {
+
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+        if($postArr["photo_1"] != "" || $postArr["photo_2"] != "" || $postArr["photo_3"] != ""){
+            $insertPhotoArr["DWTRId"] = $dwtrId;
+            $insertPhotoArr["WRSubdivision"] = $WRSubdivision;
+            $insertPhotoArr["photo_1"]=$this->fileGetContents(trim($uniqueId),"photo_1");
+            $insertPhotoArr["photo_2"]=$this->fileGetContents(trim($uniqueId),"photo_2");
+            $insertPhotoArr["photo_3"]=$this->fileGetContents(trim($uniqueId),"photo_3");
+    
+            $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DWTRPHOTOS"],$insertPhotoArr,1,2);
+        }
+
+       
+
+    }
+
+    function getDWTRPhotos($DWTRId, $subDevisionId){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+        $dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        
+        $selectFiledsMan=array("photo_1","photo_2","photo_3");
+        $whereClauseMan = "DWTRId=$DWTRId and WRSubdivision=$subDevisionId";
+        $resMan=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DWTRPHOTOS"],$selectFiledsMan,$whereClauseMan);
+        return $resMan;
+		
     }
 
     function imageUploads($postArr){
