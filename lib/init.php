@@ -6,6 +6,7 @@ error_reporting(0);
 
 // session_start();
 
+header("Access-Control-Allow-Origin: *");
 //Global Class includes
 $ROOTPATH = $_SERVER['DOCUMENT_ROOT']."/productivity-api";
 include_once $ROOTPATH."/lib/class.db.php";

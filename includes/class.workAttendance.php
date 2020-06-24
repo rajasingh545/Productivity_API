@@ -24,7 +24,8 @@ class REQUESTS
 				$addCond = "createdOn='".$postArr["startDate"]."'";
 			}
 			else{
-				$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID or addSupervsor= $userID)";
+				//$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID or addSupervsor like '%$userID%')";
+				$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID)";
 				
 			}
 			
@@ -49,9 +50,14 @@ class REQUESTS
 					foreach($workerids as $ids){
 						$workeridFinal[] = $ids["workerId"];
 					}
-
+					$temp=$det['addSupervsor'];
+					if(!empty($temp))
+					    $det['addSupervsor']=explode(',',$temp);
+					else
+					    $det['addSupervsor']=[];
 					$results[$key] =  $det;
 					$results[$key]["workers"] = $workeridFinal;
+					$results[$key]["isNew"] = true;
 
 				}    
 			}      	
@@ -60,42 +66,154 @@ class REQUESTS
 		else{
 			$results = array(); 
 		}
-
 		
+		$historysts=$postArr["requestType"];
+		$historyArr=array();
+		if($historysts==1)
+		{
+            $whereClause = "status=3 AND $addCond order by workArrangementId desc";		
+            $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
+            $projectArr = array();
+            $count_submit=count($results);
+    		if($res[1] > 0){
+    			$projectArr = $db->fetchArray($res[0], 1);
+    			foreach($projectArr as $key=>$det){
+    				$whereClause2 = "workArrangementId=".$det["workArrangementId"]." and isSupervisor !=1";
+    				$selectFileds2 = array("workerId");
+    				$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
+    				$listingDetails = array();
+    				if($res2[1] > 0){
+    					$workerids = $db->fetchArray($res2[0],1); 
+    					$workeridFinal = array();
+    					foreach($workerids as $ids){
+    						$workeridFinal[] = $ids["workerId"];
+    					}
+    					$temp=$det['addSupervsor'];
+    					if(!empty($temp))
+    					    $det['addSupervsor']=explode(',',$temp);
+    					else
+    					    $det['addSupervsor']=[];
+    					//$historyArr[$key] =  $det;
+    					//$historyArr[$key]["workers"] = $workeridFinal;
+    					$results[$count_submit] =  $det;
+    					$results[$count_submit]["workers"] = $workeridFinal;
+    					$results[$count_submit]["isNew"] = false;
+    					$count_submit++;
+    				}    
+    			}      	
+    		}
+	    }
+	    //$finalresults['submittedrecords']=$results;
+	    //$finalresults['historyrecords']=$historyArr;
 		return $this->common->arrayToJson($results);
 	}
 	function getWorkArrangementDetails($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		$requestype = $postArr["requestType"];
 		
+		$workeridlist=[];
+		$workassigned="";
+		$whereClause = "workArrangementId=".$postArr["listingId"];
+		$selectFileds2 = array("workerId","forDate");
+		$selecteddate='';
+		$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause);
+		if($res2[1] > 0){
+		    $workerids = $db->fetchArray($res2[0],1);
+		    foreach($workerids as $ids){
+		        $workeridlist[] = $ids["workerId"];
+		        $selecteddate=$ids["forDate"];
+		    }
+		    if(!empty($workeridlist))
+		    {
+		        $workeridlist=implode(',',$workeridlist);
+		        $whereClause = "workerId IN(".$workeridlist.") and forDate='".$selecteddate."' and outTime='00:00:00' and draftStatus=1";
+        		$selectFileds2 = array("workerId");
+        		$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause);
+        		if($res2[1] > 0){
+        		    $workassigned="Worker or Supervisor Already Assigned Project";
+        		}
+		    }
+		}
 		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor", "createdOn", "remarks");		
 		$whereClause = "workArrangementId=".$postArr["listingId"];		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
 		$results = array();
 		$projectArr = array();
+		$project_id=0;
 		if($res[1] > 0){
 			$projectArr = $db->fetchArray($res[0]);
-			
+				if($projectArr['projectId'])
+			        $project_id=$projectArr['projectId'];
+			    else
+			        $project_id=0;
+			    foreach($projectArr as $key=>$det){
+			        if($key=='addSupervsor')
+			        {
+                        $temp=$det;
+                        if(!empty($temp))
+                            $projectArr['addSupervsor']=explode(',',$temp);
+                        else
+                            $projectArr['addSupervsor']=[];
+			        }
+			    }
 				$whereClause2 = "workArrangementId=".$projectArr["workArrangementId"];
-				$selectFileds2 = array("workerId","partial");
+				$selectFileds2 = array("workerId","partial","isSupervisor");
 				$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
 				$listingDetails = array();
 				if($res2[1] > 0){
 					$workerids = $db->fetchArray($res2[0],1); 
 					$workeridFinal = array();
 					$partialWorkers = array();
+					$partialsupervisor = array();
 					foreach($workerids as $ids){
-						$workeridFinal[] = $ids["workerId"];
-						if($ids["partial"] == 1){
-							$partialWorkers[] = $ids["workerId"];
-						}
+						if($ids["isSupervisor"]==0)
+					    {
+    						$workeridFinal[] = $ids["workerId"];
+    						if($ids["partial"] == 1){
+    							$partialWorkers[] = $ids["workerId"];
+    						}
+					    }
+					    else
+					    {
+    						if($ids["partial"] == 1){
+    							$partialsupervisor[] = $ids["workerId"];
+    						}
+					    }
 					}
-
-				
-					$projectArr["workers"] = $workeridFinal;
+					
+                    $projectArr["workers"] = $workeridFinal;
 					$projectArr["partialWorkers"] = $partialWorkers;
-
+					$projectArr["partialsupervisor"] = $partialsupervisor;
+                    $projectArr["workdraft"] = $workassigned;
+                    $getavailaleworkersup = $this->availableworkersupervisorDetails($project_id,$selecteddate);
+                    if(!empty($getavailaleworkersup))
+                    {
+                        $projectArr["availablesupervisor"] = $getavailaleworkersup['supervisors'];
+                        $projectArr["availableworker"] = $getavailaleworkersup['workers'];
+                    }
+                    else{
+                        $projectArr["availablesupervisor"] = [];
+                        $projectArr["availableworker"] = [];
+                    }
+                    if($requestype==1)
+                    {
+                        $temp_sup=[];
+                        if(count($projectArr['addSupervsor'])>0)
+                            $temp_sup=$projectArr['addSupervsor'];
+                        if(count($temp_sup)>0)
+                            $temp_sup[]=$projectArr['baseSupervsor'];
+                            
+                        $temp_sup=implode(',',$temp_sup);
+                        $getsupervisor= $this->getsupervisorname($temp_sup);
+                        $temp_ava_sup=array_merge($projectArr["availablesupervisor"],$getsupervisor);
+                        $projectArr["availablesupervisor"]=$this->my_array_unique($temp_ava_sup);
+                        
+                        $getsupervisor= $this->getworkername(implode(',',$workeridFinal));
+                        $temp_ava_wor = array_merge($projectArr["availableworker"],$getsupervisor);
+                        $projectArr["availableworker"]=$this->my_array_unique($temp_ava_wor);
+                    }
 				}    
 			      	
 	
@@ -107,7 +225,153 @@ class REQUESTS
 		
 		return $this->common->arrayToJson($projectArr);
 	}
+	function my_array_unique($array, $keep_key_assoc = false){
+        $duplicate_keys = array();
+        $tmp = array();       
+    
+        foreach ($array as $key => $val){
+            // convert objects to arrays, in_array() does not support objects
+            if (is_object($val))
+                $val = (array)$val;
+    
+            if (!in_array($val, $tmp))
+                $tmp[] = $val;
+            else
+                $duplicate_keys[] = $key;
+        }
+    
+        foreach ($duplicate_keys as $key)
+            unset($array[$key]);
+    
+        return $keep_key_assoc ? $array : array_values($array);
+    }
+	function getsupervisorname($supervisors){
+	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		
+		$selectFileds=array("userId","Name");
+	    $whereClause = "userId IN(".$supervisors.")";
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
+		$vehiclesArr=[];
+		if($res[1] > 0){
+			$vehiclesArr = $db->fetchArray($res[0], 1);          	
+		}
+		return $vehiclesArr;
+	}
+	function getworkername($workers){
+	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		
+	    $selectFileds=array("workerName","workerId","teamId");
+		$whereClause = "workerId IN(".$workers.")";
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds,$whereClause);
+		
+		$newWorkerArr = array();
+		if($res[1] > 0){
+			$driverArr = $db->fetchArray($res[0], 1);  
+			foreach($driverArr as $key => $val){
+				$newWorkerArr[$key]["workerName"] = $val["workerName"];
+				$newWorkerArr[$key]["workerId"] = $val["workerId"]."-".$val["teamId"];
+				$newWorkerArr[$key]["workerIdActual"] = $val["workerId"];
+			}  
+		}
+		return $newWorkerArr;
+	}
+	function availableworkersupervisorDetails($pid, $date){
+	    //return $this->common->arrayToJson($pid.' '.$date);
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		
+		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
+		$selectFiledsat=array("workerId");
+		if($date != ""){
+			$whereClauseat = "forDate='".$date."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
+		}
+		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
+		if($resat[1] > 0){
+			$workerIds = $db->fetchArray($resat[0], 1);  
+			$assignedWorkers = array();
+			foreach($workerIds as $worker){
+				array_push($assignedWorkers, $worker["workerId"]);
+			}        	
+		}
+		else{
+			$assignedWorkers =array();
+		}
 
+		$selectFileds=array("userId","Name");
+		if(count($assignedWorkers) > 0){
+		    $whereClause = "project like '%$pid%' and userStatus=1 and userId NOT IN(".implode(",",$assignedWorkers).")";
+		}
+		else{
+			$whereClause = "project like '%$pid%' and userStatus=1 ";
+		}
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
+		
+		$vehiclesArr = array();
+		if($res[1] > 0){
+			$vehiclesArr["supervisors"] = $db->fetchArray($res[0], 1);          	
+		}
+		else{
+			$vehiclesArr["supervisors"]=array(); 
+		}
+		
+		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
+		$selectFiledsat=array("workerId");
+		if($date != ""){
+			$whereClauseat = "forDate='".$date."' and draftStatus=1 and outTime='00:00:00'";
+		}
+		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
+		if($resat[1] > 0){
+			$workerIds = $db->fetchArray($resat[0], 1);  
+			$assignedWorkers = array();
+			foreach($workerIds as $worker){
+				array_push($assignedWorkers, $worker["workerId"]);
+			}
+		}
+		else{
+			$assignedWorkers =array();
+		}
+		
+		/*$whereClauseat="teamName='Home Leave'";
+        $selectFiledsat=array("teamid");
+        $team_leave=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["TEAM"],$selectFiledsat,$whereClauseat);
+		if($team_leave[1] > 0){
+			$teamID = $db->fetchArray($team_leave[0], 1);
+			$teamID=$teamID[0]['teamid'];
+		}
+		else
+		{
+		    $teamID=0;
+		}*/
+		
+		$selectFileds=array("workerName","workerId","teamId");
+		if(count($assignedWorkers) > 0){
+			$whereClause = "project like '%$pid%' and status=1 and homeLeave NOT IN(2) and workerId NOT IN(".implode(",",$assignedWorkers).")";
+		}
+		else{
+			$whereClause = "project like '%$pid%' and status=1 and homeLeave NOT IN(2)";
+		}
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds,$whereClause);
+		
+		$newWorkerArr = array();
+		if($res[1] > 0){
+			$driverArr = $db->fetchArray($res[0], 1);  
+			foreach($driverArr as $key => $val){
+				$newWorkerArr[$key]["workerName"] = $val["workerName"];
+				$newWorkerArr[$key]["workerId"] = $val["workerId"]."-".$val["teamId"];
+				$newWorkerArr[$key]["workerIdActual"] = $val["workerId"];
+			}  
+		}
+		else{
+			$newWorkerArr=array(); 
+		}
+		$vehiclesArr['workers']=$newWorkerArr;
+		return $vehiclesArr;
+	}
 	function updateWorkArranmentsStatus($obj){
 			// foreach(ob)
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
@@ -123,6 +387,9 @@ class REQUESTS
 		$whereClause="workArrangementId IN(".$ids.")";
 		$updateArr["status"] = 1;
 		$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$updateArr,$whereClause);
+		$updateArr["status"] = 0;
+		$updateArr["draftStatus"] = 1;
+		$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$updateArr,$whereClause);
 		$returnval["response"] ="success";
 		$returnval["responsecode"] = 1; 
 		return $this->common->arrayToJson($returnval);
@@ -130,53 +397,131 @@ class REQUESTS
 	}
 	function updateWorkArranments($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-       
+		$dbm = new DB;
+        $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        
         $insertArr["projectId"]=trim($postArr["value_projects"]);
         $insertArr["baseSupervsor"]=trim($postArr["value_supervisors"]);
-        $insertArr["addSupervsor"]=trim($postArr["value_supervisors2"]);
+        $base_sup=$insertArr["baseSupervsor"];
+        $addsuplist=$postArr["value_supervisors2"];
+        $partialsuper=$postArr["partialSupervisors"];
+        $work_arr_id=$postArr["listingId"];
+        $for_date=trim($postArr["startDate"]);
         
+        if(empty($partialsuper))
+            $partialsuper=[];
+        
+        if(!empty($addsuplist))
+        {
+            $addSupervsor=implode(",",$addsuplist);
+        }
+        else
+            $addSupervsor=0;
+            
+        $insertArr["addSupervsor"]=$addSupervsor;
+		
 		$insertArr["createdOn"]=trim($postArr["startDate"]);
 		$insertArr["remarks"]=trim($postArr["remarks"]);
-		
-        
-        $dbm = new DB;
-		$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		$whereClause = "workArrangementId = ".$postArr["listingId"];
-        $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$insertArr,$whereClause);
-		
-		$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
-		// if($deleteCount > 0){
-			foreach($postArr["workerIds"] as $value){
-				$arr = explode("-", trim($value));
-				$insertArr2 = array();
-				$insertArr2["workArrangementId"]=$postArr["listingId"];       
-				$insertArr2["workerId"]=$arr[0];     
-				$insertArr2["workerTeam"]=$arr[1];       
-				$insertArr2["forDate"]=$postArr["startDate"];
-				$insertArr2["createdOn"]=date("Y-m-d H:i:s");
-				
-					if(in_array(trim($value), $postArr["partialWorkers"])){
-						$insertArr2["partial"]=1;     
-					}
-				
-				
-				$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$insertArr2,1,2);
-				// pr($dbm);
+		$whereClause = "workArrangementId = ".$work_arr_id." and createdOn='".$for_date."'";
+		$selectFiledsat=array("status","workArrangementId","baseSupervsor","addSupervsor","createdOn");
+        $select_work = $dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFiledsat,$whereClause);
+        if($select_work[1] > 0){
+			$selectArr = $dbm->fetchArray($select_work[0], 1);
+			$work_arr_status=$selectArr[0]['status'];
+			$base_super=$selectArr[0]['baseSupervsor'];
+			$add_super=$selectArr[0]['addSupervsor'];
+			$createon=$selectArr[0]['createdOn'];
+			if($work_arr_status==1)
+			{
+			    $whereClause = "workArrangementId = ".$work_arr_id." and draftStatus=1";
+        		$selectFiledsat=array("workerId");
+                $select_work1 = $dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClause);
+                if($select_work1[1] > 0){
+                    $total_count_att=$select_work1[1];
+                }
+			    //$whereClause = "workArrangementId = ".$work_arr_id." and draftStatus=1 and statusOut IN(0,1)";
+			    $whereClause = "workArrangementId = ".$work_arr_id." and draftStatus=1 and ((inTime='00:00:00' and outTime='00:00:00') or (inTime>'00:00:00' and outTime>'00:00:00'))";
+        		$selectFiledsat=array("workerId");
+                $select_work2 = $dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClause);
+                if($select_work2[1] > 0){
+                    if($total_count_att!=$select_work2[1])
+                    {
+                        $returnval["response"] ="Update Failure supervisor or worker already given intime";
+                		$returnval["responsecode"] = 0; 
+                	    return $this->common->arrayToJson($returnval);
+                    }
+                    $whereClause = "workArrangementId = ".$work_arr_id." and status=1";
+                    $update_arr_work["status"]=3;
+                    $updatework = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$update_arr_work,$whereClause);
+                    $whereClause = "workArrangementId = ".$work_arr_id." and draftStatus=1";
+                    $update_arr_att["draftStatus"]=3;
+                    $updatework = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$update_arr_att,$whereClause);
+                    
+                    $insertArr["status"]=1;
+                    $insid_new_work = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$insertArr,1,2);
+                    $work_arr_id=$insid_new_work;
+                }
 			}
-		// }
-		
-		
+			else if($work_arr_status==2)
+			{
+		        $whereClause = "workArrangementId = ".$work_arr_id;
+                $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$insertArr,$whereClause);
+        		$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);	    
+			}
+        }
+		foreach($postArr["workerIds"] as $value){
+			$arr = explode("-", trim($value));
+			$insertArr2 = array();
+			$insertArr2["workArrangementId"]=$work_arr_id;       
+			$insertArr2["workerId"]=$arr[0];     
+			$insertArr2["workerTeam"]=$arr[1];       
+			$insertArr2["forDate"]=$postArr["startDate"];
+			$insertArr2["createdOn"]=date("Y-m-d H:i:s");
+			
+			if(in_array(trim($value), $postArr["partialWorkers"])){
+				$insertArr2["partial"]=1;     
+			}
+			if($work_arr_status==1){
+                $insertArr2["draftStatus"]=1;
+            }
+			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$insertArr2,1,2);
+		}
+		foreach($addsuplist as $value){
+            if(in_array($value,$partialsuper))
+                $t_partial=1;
+            else
+                $t_partial=0;
+            $ins = array();
+            $ins["workArrangementId"]=$work_arr_id;
+            $ins["workerId"]=$value;       
+            $ins["forDate"]=$postArr["startDate"];
+            $ins["createdOn"]=date("Y-m-d H:i:s");
+            $ins["isSupervisor"] = 1;
+            $ins["partial"] = $t_partial;
+            if($work_arr_status==1){
+                $ins["draftStatus"] = 1;
+            }
+            $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$ins,1,2);
+		}
+		if(!empty($base_sup))
+		{
+            $ins = array();
+            $ins["workArrangementId"]=$work_arr_id;
+            $ins["workerId"]=$base_sup;       
+            $ins["forDate"]=$postArr["startDate"];
+            $ins["createdOn"]=date("Y-m-d H:i:s");
+            $ins["isSupervisor"] = 1;
+            if($work_arr_status==1){
+                $ins["draftStatus"] = 1;
+            }
+            $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$ins,1,2);
+		}
         $dbm->dbClose();
-       
-            
-            $returnval["response"] ="success";
-			$returnval["responsecode"] = 1; 
-			$returnval["requestID"] = $requestNumber; 
-            
-           
-		
-		return $this->common->arrayToJson($returnval);
-	}	
+        $returnval["response"] ="success";
+		$returnval["responsecode"] = 1; 
+		$returnval["requestID"] = $requestNumber; 
+	    return $this->common->arrayToJson($returnval);
+	}
 
 	function getProjectAttendance($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
@@ -188,7 +533,8 @@ class REQUESTS
 		}	
 		else{
 			$userID = $postArr["userId"];
-			$addCond = "and (baseSupervsor = $userID or addSupervsor= $userID)";
+			//$addCond = "and (baseSupervsor = $userID or addSupervsor like '%$userID%')";
+			$addCond = "and (baseSupervsor = $userID)";
 			if($postArr["userType"] == 1){
 				$addCond= "";
 			}
@@ -202,10 +548,12 @@ class REQUESTS
 		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
 		$workeridFinal = array();
+		$final_list = array();
+		$supervisor_list=array();
 		if($res[1] > 0){
 			$details = $db->fetchArray($res[0]); 
 
-			$selectFileds2=array("workArrangementId","workerId","inTime","outTime","workerTeam", "reason", "status","statusOut");
+			$selectFileds2=array("workArrangementId","workerId","inTime","outTime","workerTeam", "reason", "status","statusOut","isSupervisor");
 			$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 			$whereClause2 ="workArrangementId= ".$details["workArrangementId"]." order by workerTeam";
 			// $whereClause2 ="workArrangementId= ".$details["workArrangementId"]." AND ((partial = 0) OR (partial=1 AND statusOut = 1)) order by workerTeam";
@@ -217,19 +565,20 @@ class REQUESTS
 			$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
 
 			if($res2[1] > 0){
-				$workerids = $db->fetchArray($res2[0],1); 
-				$i = 0;
+				$workerids = $db->fetchArray($res2[0],1);
 				foreach($workerids as $ids){
-					
-					$workeridFinal[$i] = $ids;
-					$workeridFinal[$i]["remarks"] = $details["attendanceRemark"];
-					$i++;
+				    $ids["remarks"] = $details["attendanceRemark"];
+					if($ids['isSupervisor'])
+    					$supervisor_list[] = $ids;
+					else
+					    $workeridFinal[] = $ids;
 				}
 
 			}    
-			
+			$final_list["supervisorlist"]=$supervisor_list;
+		    $final_list["workerlist"]=$workeridFinal;	
 		}
-		return $this->common->arrayToJson($workeridFinal);	
+		return $this->common->arrayToJson($final_list);	
 
 	}
 	function getSubmittedAttendanceList($postArr){
@@ -237,11 +586,17 @@ class REQUESTS
 		$db = new DB;
 		$selectFileds=array("workArrangementId","projectId", "createdOn","createdBy");
 		$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		if($postArr["userType"]!=1){
+		    $user_id=$postArr["userId"];
+		    $add_condition=" and baseSupervsor=".$user_id;
+		}
+		else
+		    $add_condition='';
 		if($postArr["startDate"]){
-			$whereClause = "attendanceStatus = '1' and status = 1 and createdOn='".$postArr["startDate"]."'";
+			$whereClause = "attendanceStatus = '1' and status = 1 and createdOn='".$postArr["startDate"]."'".$add_condition;
 		}
 		else{
-			$whereClause = "attendanceStatus = '1' and status = 1 and createdOn='".date("Y-m-d")."'";
+			$whereClause = "attendanceStatus = '1' and status = 1 and createdOn='".date("Y-m-d")."'".$add_condition;
 		}
 		// echo $whereClause;
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
@@ -330,10 +685,24 @@ class REQUESTS
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$proectExist = $this->workArrangementsExists(trim($postArr["value_projects"]), trim($postArr["startDate"]));
 		if($proectExist == false){ 
-       
+			if(!empty($postArr["selectedItemsAddSup"]))
+			{
+			    $addSupervsor=$postArr["selectedItemsAddSup"];
+			    $temp_addsupid=array();
+			    foreach($addSupervsor as $value)
+			    {
+			        $temp_addsupid[]=$value['userId'];
+			    }
+			    $addSupervsor=implode(",",$temp_addsupid);
+			}
+			else
+			{
+			    $addSupervsor=0;
+			}
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["baseSupervsor"]=trim($postArr["value_supervisors"]);
-			$insertArr["addSupervsor"]=trim($postArr["value_supervisors2"]);
+			//$insertArr["addSupervsor"]=trim($postArr["value_supervisors2"]);
+			$insertArr["addSupervsor"]=$addSupervsor;
 			$insertArr["createdBy"]=trim($postArr["userId"]);
 			$insertArr["createdOn"]=trim($postArr["startDate"]);
 			$insertArr["remarks"]=trim($postArr["remarks"]);
@@ -346,8 +715,8 @@ class REQUESTS
 			
 			// tracking supervisor attendance
 			$this->insertSupervisorAttendance($insid, $postArr["value_supervisors"], $postArr["startDate"]);
-			if(trim($postArr["value_supervisors2"]) != ""){
-				$this->insertSupervisorAttendance($insid, $postArr["value_supervisors2"], $postArr["startDate"]);
+			if(trim($postArr["selectedItemsAddSup"]) != "" || !empty($postArr["selectedItemsAddSup"])){
+				$this->insertaddSupervisorAttendance($insid, $postArr["selectedItemsAddSup"], $postArr["startDate"]);
 			}
 			
 
@@ -403,8 +772,50 @@ class REQUESTS
 		$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$ins,1,2);
 		
 	}
-	
-
+	function insertaddSupervisorAttendance($insid, $supervisor, $startDate){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$dbm = new DB;
+		$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		foreach($supervisor as $value){
+		    $t_userid=$value['userId'];
+		    $t_partial=$value['isPartial'];
+		    if($t_partial)
+		        $t_partial=1;
+		    else
+		        $t_partial=0;
+			$ins = array();
+			$ins["workArrangementId"]=$insid;
+			$ins["workerId"]=$t_userid;       
+			$ins["forDate"]=$startDate;
+			$ins["createdOn"]=date("Y-m-d H:i:s");
+			$ins["isSupervisor"] = 1;
+			$ins["partial"] = $t_partial;
+			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$ins,1,2);
+		}
+	}
+    function deletedraftworkarrangement($postArr){
+	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$dbm = new DB;
+        $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        $worklistingId = $postArr["deleteWorkArrangementIds"];
+        if(!empty($worklistingId))
+        {
+            $worklistingId=implode(',',$worklistingId);
+            $whereClause = "workArrangementId IN (".$worklistingId.") and status=2";
+            $deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$whereClause);
+            $whereClause = "workArrangementId IN (".$worklistingId.") and draftStatus=2";
+            $deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
+            
+            $returnval["response"] ="success";
+    		$returnval["responsecode"] = 1;
+        }
+        else
+        {
+            $returnval["response"] ="Failure";
+    		$returnval["responsecode"] = 2;
+        }
+        return $this->common->arrayToJson($returnval);
+	}
 	
 }
 

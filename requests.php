@@ -71,7 +71,9 @@ elseif($obj["requestCode"] === 15){
 
     $response = $requestObj->getWorkRequestList($obj);
 }
-
+elseif($obj["requestCode"] === 16){
+    $response = $requestObj->deletedraftworkarrangement($obj);
+}
 
 echo $response;
 

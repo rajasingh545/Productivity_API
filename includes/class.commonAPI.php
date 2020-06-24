@@ -202,11 +202,11 @@ class commonAPI
 
 
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and partial=0 $addWhere";
-		$whereClauseat = "forDate='".date("Y-m-d")."' and inTime NOT IN('00:00:00') and outTime='00:00:00' and partial=0 $addWhere";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0 $addWhere";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 			//$whereClauseat = "forDate='".$postArr["startDate"]."' and partial=0 $addWhere";
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and inTime NOT IN('00:00:00') and outTime='00:00:00' and partial=0 $addWhere";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and partial=0 $addWhere";
 		}
 		// echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
@@ -221,13 +221,26 @@ class commonAPI
 		else{
 			$assignedWorkers =array();
 		}
-
+		//print_r($assignedWorkers);exit;
+		
+		/*$whereClauseat="teamName='Home Leave'";
+        $selectFiledsat=array("teamid");
+        $team_leave=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["TEAM"],$selectFiledsat,$whereClauseat);
+		if($team_leave[1] > 0){
+			$teamID = $db->fetchArray($team_leave[0], 1);
+			$teamID=$teamID[0]['teamid'];
+		}
+		else
+		{
+		    $teamID =0; 
+		}*/
+		
 		$selectFileds=array("workerName","workerId","teamId");
 		if(count($assignedWorkers) > 0){
-			$whereClause = "status=1 and workerId NOT IN(".implode(",",$assignedWorkers).")";
+			$whereClause = "status=1 and homeLeave NOT IN(2) and workerId NOT IN(".implode(",",$assignedWorkers).")";
 		}
 		else{
-			$whereClause = "status=1";
+			$whereClause = "status=1 and homeLeave NOT IN(2)";
 		}
 		// echo $whereClause;
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds,$whereClause);
@@ -271,19 +284,19 @@ class commonAPI
 		
 		return $vehiclesArr;
 	}
-
+	/*
 	function supervisorDetails($pid, $postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
 
-		$whereClauseat = "forDate='".date("Y-m-d")."' and inTime NOT IN('00:00:00') and outTime='00:00:00' and isSupervisor=1";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and inTime NOT IN('00:00:00') and outTime='00:00:00' and isSupervisor=1";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
 		}
-		// echo $whereClauseat;
+		 //echo $whereClauseat;exit;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
 			$workerIds = $db->fetchArray($resat[0], 1);  
@@ -318,8 +331,101 @@ class commonAPI
 		}
 		
 		return $this->common->arrayToJson($vehiclesArr);
-	}
+	}*/
+	function availableworkersupervisorDetails($pid, $postArr){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
+		$selectFiledsat=array("workerId");
+		if($postArr["startDate"] != ""){
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
+		}
+		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
+		if($resat[1] > 0){
+			$workerIds = $db->fetchArray($resat[0], 1);  
+			$assignedWorkers = array();
+			foreach($workerIds as $worker){
+				array_push($assignedWorkers, $worker["workerId"]);
+			}        	
+		}
+		else{
+			$assignedWorkers =array();
+		}
 
+		$selectFileds=array("userId","Name");
+		if(count($assignedWorkers) > 0){
+		    $whereClause = "project like '%$pid%' and userStatus=1 and userId NOT IN(".implode(",",$assignedWorkers).")";
+		}
+		else{
+			$whereClause = "project like '%$pid%' and userStatus=1 ";
+		}
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
+		
+		$vehiclesArr = array();
+		if($res[1] > 0){
+			$vehiclesArr["supervisors"] = $db->fetchArray($res[0], 1);          	
+		}
+		else{
+			$vehiclesArr["supervisors"]=array(); 
+		}
+		
+		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00'";
+		$selectFiledsat=array("workerId");
+		if($postArr["startDate"] != ""){
+			//$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and partial=0";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00'";
+		}
+		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
+		if($resat[1] > 0){
+			$workerIds = $db->fetchArray($resat[0], 1);  
+			$assignedWorkers = array();
+			foreach($workerIds as $worker){
+				array_push($assignedWorkers, $worker["workerId"]);
+			}
+		}
+		else{
+			$assignedWorkers =array();
+		}
+		
+		/*$whereClauseat="teamName='Home Leave'";
+        $selectFiledsat=array("teamid");
+        $team_leave=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["TEAM"],$selectFiledsat,$whereClauseat);
+		if($team_leave[1] > 0){
+			$teamID = $db->fetchArray($team_leave[0], 1);
+			$teamID=$teamID[0]['teamid'];
+		}
+		else
+		{
+		    $teamID =0; 
+		}*/
+		
+		$selectFileds=array("workerName","workerId","teamId");
+		if(count($assignedWorkers) > 0){
+			$whereClause = "project like '%$pid%' and status=1 and homeLeave NOT IN(2) and workerId NOT IN(".implode(",",$assignedWorkers).")";
+		}
+		else{
+			$whereClause = "project like '%$pid%' and status=1 and homeLeave NOT IN(2)";
+		}
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds,$whereClause);
+		
+		$newWorkerArr = array();
+		if($res[1] > 0){
+			$driverArr = $db->fetchArray($res[0], 1);  
+			foreach($driverArr as $key => $val){
+				$newWorkerArr[$key]["workerName"] = $val["workerName"];
+				$newWorkerArr[$key]["workerId"] = $val["workerId"]."-".$val["teamId"];
+				$newWorkerArr[$key]["workerIdActual"] = $val["workerId"];
+			}  
+		}
+		else{
+			$newWorkerArr=array(); 
+		}
+		$vehiclesArr['workers']=$newWorkerArr;
+		return $this->common->arrayToJson($vehiclesArr);
+	}
 	function getProjectWiseSupervisor($projectId){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
