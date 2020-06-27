@@ -41,14 +41,27 @@ class REQUESTS
 			$projectArr = $db->fetchArray($res[0], 1);
 			foreach($projectArr as $key=>$det){
 				$whereClause2 = "workArrangementId=".$det["workArrangementId"]." and isSupervisor !=1";
-				$selectFileds2 = array("workerId");
+				$selectFileds2 = array("workerId","workerTeam");
 				$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
 				$listingDetails = array();
 				if($res2[1] > 0){
 					$workerids = $db->fetchArray($res2[0],1); 
-					$workeridFinal = array();;
+					$workeridFinal = array();
+					$workeridteams = array();
+					$workerteamslist = array();
 					foreach($workerids as $ids){
 						$workeridFinal[] = $ids["workerId"];
+						$workerid_team=$ids["workerTeam"];
+						
+						$whereClause4="teamid=".$workerid_team;	
+						$selectFileds4 = array("teamName");
+		                $res4=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["TEAM"],$selectFileds4,$whereClause4);
+		                if($res4[1]>0)
+		                {
+		                    $workerteamnames = $db->fetchArray($res4[0],1);  
+		                    $workerteam_name=$workerteamnames[0]['teamName'];
+		                }
+		                $workeridteams[]=array("worker_id"=>$ids["workerId"],"team_id"=>$workerid_team,"team_name"=>$workerteam_name);
 					}
 					$temp=$det['addSupervsor'];
 					if(!empty($temp))
@@ -58,7 +71,7 @@ class REQUESTS
 					$results[$key] =  $det;
 					$results[$key]["workers"] = $workeridFinal;
 					$results[$key]["isNew"] = true;
-
+					$results[$key]["workersteamlist"] = $workeridteams;
 				}    
 			}      	
 	
@@ -85,26 +98,41 @@ class REQUESTS
     				if($res2[1] > 0){
     					$workerids = $db->fetchArray($res2[0],1); 
     					$workeridFinal = array();
+    					$workeridteams = array();
     					foreach($workerids as $ids){
     						$workeridFinal[] = $ids["workerId"];
+    						$whereClause3="workerId=".$ids["workerId"];	
+    						$selectFileds3 = array("teamId");
+    		                $res3=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds3,$whereClause3);
+    		                if($res3[1] > 0){
+    		                    $workerteamid = $db->fetchArray($res3[0],1);
+    		                    $workerid_team=$workerteamid[0]['teamId'];
+    		                    
+    		                    $whereClause4="teamid=".$workerid_team;	
+        						$selectFileds4 = array("teamName");
+        		                $res4=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["TEAM"],$selectFileds4,$whereClause4);
+        		                if($res4[1]>0)
+        		                {
+        		                    $workerteamnames = $db->fetchArray($res4[0],1);  
+        		                    $workerteam_name=$workerteamnames[0]['teamName'];
+        		                }
+    		                }
+    		                $workeridteams[]=array("worker_id"=>$ids["workerId"],"team_id"=>$workerid_team,"team_name"=>$workerteam_name);
     					}
     					$temp=$det['addSupervsor'];
     					if(!empty($temp))
     					    $det['addSupervsor']=explode(',',$temp);
     					else
     					    $det['addSupervsor']=[];
-    					//$historyArr[$key] =  $det;
-    					//$historyArr[$key]["workers"] = $workeridFinal;
     					$results[$count_submit] =  $det;
     					$results[$count_submit]["workers"] = $workeridFinal;
     					$results[$count_submit]["isNew"] = false;
+    					$results[$count_submit]["workersteamlist"] = $workeridteams;
     					$count_submit++;
     				}    
     			}      	
     		}
 	    }
-	    //$finalresults['submittedrecords']=$results;
-	    //$finalresults['historyrecords']=$historyArr;
 		return $this->common->arrayToJson($results);
 	}
 	function getWorkArrangementDetails($postArr){
