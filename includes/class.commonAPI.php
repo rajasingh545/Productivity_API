@@ -237,10 +237,10 @@ class commonAPI
 		
 		$selectFileds=array("workerName","workerId","teamId");
 		if(count($assignedWorkers) > 0){
-			$whereClause = "status=1 and homeLeave NOT IN(2) and workerId NOT IN(".implode(",",$assignedWorkers).")";
+			$whereClause = "status=1 and homeLeave !=2 and workerId NOT IN(".implode(",",$assignedWorkers).")";
 		}
 		else{
-			$whereClause = "status=1 and homeLeave NOT IN(2)";
+			$whereClause = "status=1 and homeLeave !=2";
 		}
 		// echo $whereClause;
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds,$whereClause);
@@ -404,10 +404,10 @@ class commonAPI
 		
 		$selectFileds=array("workerName","workerId","teamId");
 		if(count($assignedWorkers) > 0){
-			$whereClause = "project like '%$pid%' and status=1 and homeLeave NOT IN(2) and workerId NOT IN(".implode(",",$assignedWorkers).")";
+			$whereClause = "project like '%$pid%' and status=1 and homeLeave !=2 and workerId NOT IN(".implode(",",$assignedWorkers).")";
 		}
 		else{
-			$whereClause = "project like '%$pid%' and status=1 and homeLeave NOT IN(2)";
+			$whereClause = "project like '%$pid%' and status=1 and homeLeave !=2";
 		}
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds,$whereClause);
 		
