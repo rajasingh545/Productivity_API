@@ -612,7 +612,7 @@ class REQUESTS
 	function getSubmittedAttendanceList($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
-		$selectFileds=array("workArrangementId","projectId", "createdOn","createdBy");
+		$selectFileds=array("workArrangementId","projectId", "createdOn","createdBy","attendanceRemark");
 		$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		if($postArr["userType"]!=1){
 		    $user_id=$postArr["userId"];
@@ -626,14 +626,53 @@ class REQUESTS
 		else{
 			$whereClause = "attendanceStatus = '1' and status = 1 and createdOn='".date("Y-m-d")."'".$add_condition;
 		}
-		// echo $whereClause;
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
 		$workeridFinal = array();
+		$final_list = array();
+		$supervisor_list=array();
 		if($res[1] > 0){
 			$details = $db->fetchArray($res[0], 1); 
 
 			
 			
+			foreach($details as $key=>$worklist)
+			{
+			    $work_id=$worklist['workArrangementId'];
+			    
+			    $selectFileds2=array("workArrangementId","workerId","inTime","outTime","workerTeam", "reason", "status","statusOut","isSupervisor");
+                $whereClause2 ="workArrangementId= ".$work_id." order by workerTeam";
+                $res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
+                
+                if($res2[1] > 0){
+                    $workerids = $db->fetchArray($res2[0],1);
+                    foreach($workerids as $ids){
+                        $ids["remarks"] = $details[0]["attendanceRemark"];
+                        
+                        $worker_team = $ids["workerTeam"];
+                        $whereClause4="teamid=".$worker_team;	
+                        $selectFileds4 = array("teamName");
+                        $res4=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["TEAM"],$selectFileds4,$whereClause4);
+                        if($res4[1]>0)
+                        {
+                            $workerteamnames = $db->fetchArray($res4[0],1); 
+                            $teamname=$workerteamnames[0]['teamName'];
+                        }
+                        else
+                            $teamname='';
+                        
+                        if($ids['isSupervisor'])
+                            $supervisor_list[] = $ids;
+                        else
+                        {
+                            $ids["teamname"]=$teamname;
+                            $workeridFinal[] = $ids;
+                        }
+                    }
+                }
+                $final_list["supervisorlist"]=$supervisor_list;
+                $final_list["workerlist"]=$workeridFinal;	
+                $details[$key]["attendancelist"]=$final_list;
+			}
 		}
 		else{
 			$details = array();
