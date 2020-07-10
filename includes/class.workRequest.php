@@ -966,6 +966,47 @@ class WORKREQUESTS
             return $this->common->arrayToJson($returnval);
         }
     }
+	function drawingimageupload($postArr){
+        if(isset($_FILES['drawingimage'])){
+            $file_name = $_FILES['drawingimage']['name'];
+            $file_size =$_FILES['drawingimage']['size'];
+            $file_tmp =$_FILES['drawingimage']['tmp_name'];   
+            $file_ext_orginal=end(explode('.',$file_name));
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            
+            $extensions= array("jpeg","jpg","png","pdf");
+            if(in_array($file_ext,$extensions)=== false){
+                $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF file.";
+			    $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if($file_size > 500000){
+                $returnval["response"] ="File size must be below 500 kb";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if(!file_exists("images/drawingimage/".$postArr["uniqueId"])) {
+                mkdir("images/drawingimage/".$postArr["uniqueId"], 0777, true);
+            }
+            $filepath="images/drawingimage/".$postArr["uniqueId"]."/".time().".".$file_ext_orginal;
+            if(!move_uploaded_file($file_tmp,$filepath)){
+                $returnval["response"] ="Error in image upload";
+                $returnval["responsecode"] = 0; 
+                return $this->common->arrayToJson($returnval);
+            }
+            
+            $returnval["response"] ="Image upload success";
+            $returnval["imageurl"] =BASEPATH.$filepath;
+		    $returnval["responsecode"] = 1;
+            return $this->common->arrayToJson($returnval);
+        }
+        else
+        {
+            $returnval["response"] ="Image Need to Upload";
+		    $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
+    }
 }
 
 ?>
