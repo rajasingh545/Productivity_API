@@ -419,13 +419,24 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status");
+		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","drawingAttach","drawingImage","completionImages","location");
     	$whereClause = "workRequestId='".$postArr["listingId"]."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
 		// pr($db);
 		$requestArr = array();
 		if($res[1] > 0){
             $requestArr["requestDetails"] = $db->fetchArray($res[0]);
+            if(!empty($requestArr["requestDetails"]['drawingImage']))
+            {
+                $tempimgname=BASEPATH.$requestArr["requestDetails"]['drawingImage'];
+                $requestArr["requestDetails"]['drawingImage'] = $tempimgname;
+            }
+            $tempimgsname=explode(",",$requestArr["requestDetails"]['completionImages']);
+            for($ik=0;$ik<count($tempimgsname);$ik++)
+            {
+                $tempimgsname[$ik]=BASEPATH.$tempimgsname[$ik];
+            }
+            $requestArr["requestDetails"]['completionImages']=$tempimgsname;
             
             $selectFiledsitem=array("id","workRequestId","itemId","sizeType","previousWR","workBased","contractType");
             $whereClauseitem = "workRequestId='".$postArr["listingId"]."'";
