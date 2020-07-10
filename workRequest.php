@@ -36,7 +36,16 @@ elseif($obj["requestCode"] === 21){
 elseif($obj["requestCode"] === 22){
     $response = $requestObj->updateDailyWorkTrack($obj);
 }
+elseif($obj["requestCode"] === 23){
+    $response = $requestObj->getWorkRequestListDate($obj);
+}
 
+if($_POST["requestCode"] == 24){
+    $response = $requestObj->drawingimageupload($_POST);
+}
+else if($_POST["requestCode"] == 25){
+    $response = $requestObj->completeimageuploads($_POST);
+}
 
 if($_POST["requestCode"] == 20){
     $response = $requestObj->imageUploads($_POST);
