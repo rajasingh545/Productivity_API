@@ -884,6 +884,88 @@ class WORKREQUESTS
          }
          return $this->common->arrayToJson($returnval);
     }
+	function completeimageuploads($postArr){
+        $wrequestid=$postArr['workrequestid'];
+        if(isset($_FILES['images'])){
+            $filecount=count($_FILES['images']['name']);
+            $upload_url=array();
+            $upload_url_temp=array();
+            $folderpath="images/completedimage/";
+            
+            for($i=0;$i<$filecount;$i++)
+            {
+                $file_name = $_FILES['images']['name'][$i];
+                $file_size =$_FILES['images']['size'][$i];
+                $file_ext=strtolower(end(explode('.',$file_name)));
+                $extensions= array("jpeg","jpg","png","pdf");
+                if(in_array($file_ext,$extensions)=== false){
+                    $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF each file.";
+    			    $returnval["responsecode"] = 0;
+                    return $this->common->arrayToJson($returnval);
+                }
+                if($file_size > 500000){
+                    $returnval["response"] ="Each File size must be below 500 kb";
+    			    $returnval["responsecode"] = 0;
+                    return $this->common->arrayToJson($returnval);
+                }
+            }
+            
+            if(!file_exists($folderpath.$postArr["uniqueId"])) {
+                mkdir($folderpath.$postArr["uniqueId"], 0777, true);
+            }
+            
+            for($i=0;$i<$filecount;$i++)
+            {
+                $file_name = $_FILES['images']['name'][$i];
+                $file_size =$_FILES['images']['size'][$i];
+                $file_tmp =$_FILES['images']['tmp_name'][$i];   
+                $file_ext_orginal=end(explode('.',$file_name));
+                $file_ext=strtolower(end(explode('.',$file_name)));
+                
+                $filepath=$folderpath.$postArr["uniqueId"]."/".($i+1).'_'.time().".".$file_ext_orginal;
+                if(move_uploaded_file($file_tmp,$filepath)){
+                    $upload_url[]=BASEPATH.$filepath;
+                    $upload_url_temp[]=$filepath;
+                }
+            }
+            
+            if(!empty($upload_url_temp))
+            {   
+                $insertArr=array();
+                $uploadimg=implode(",",$upload_url_temp);
+                global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+                $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+
+                $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET completionImages='".$uploadimg."' WHERE workRequestId=".$wrequestid;
+                $insid = mysqli_query($connection, $sql);
+                if($insid)
+                {
+                    $returnval["response"] ="Image upload success";
+                    $returnval["imageurl"] =$upload_url;
+        		    $returnval["responsecode"] = 1;
+        		    return $this->common->arrayToJson($returnval);
+                }
+                else
+                {
+                    $returnval["response"] ="File Upload Failure";
+    			    $returnval["responsecode"] = 0;
+    			    return $this->common->arrayToJson($returnval);
+                }
+            }
+            else
+            {
+                $returnval["response"] ="File Upload Failure";
+			    $returnval["responsecode"] = 0;
+			    return $this->common->arrayToJson($returnval);
+            }
+        }
+        else
+        {
+            $returnval["response"] ="Image Need to Upload";
+		    $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
+    }
 }
 
 ?>
