@@ -23,7 +23,13 @@ class WORKREQUESTS
             $insertArr["scaffoldRegister"] = trim($postArr["scaffoldRegister"]);
 			$insertArr["createdOn"]=date("Y-m-d H:i:s");
 			$insertArr["createdBy"]=trim($postArr["userId"]);	
+			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
+			$insertArr["location"]=trim($postArr["location"]);	
 
+            if($insertArr["drawingAttach"]==1)
+                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            else
+                $insertArr["drawingImage"]='';
 			
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
@@ -69,6 +75,15 @@ class WORKREQUESTS
             $insertArr["scaffoldRegister"] = trim($postArr["scaffoldRegister"]);
 			$insertArr["createdOn"]=date("Y-m-d H:i:s");
 			$insertArr["createdBy"]=trim($postArr["userId"]);	
+
+			
+			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
+			$insertArr["location"]=trim($postArr["location"]);
+			
+            if($insertArr["drawingAttach"]==1)
+                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            else
+                $insertArr["drawingImage"]='';
 
 			
             $dbm = new DB;
