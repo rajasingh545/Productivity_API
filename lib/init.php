@@ -17,6 +17,8 @@ include_once $ROOTPATH."/lib/class.common.php";
 include_once $ROOTPATH."/conf/dbinfo.php";
 include_once $ROOTPATH."/conf/vars.php";
 
+define("BASEPATH","http://productivity-api.macinc.in/productivity-api/");
+
 //get use sessions
 $commonObj = new COMMON;
 
