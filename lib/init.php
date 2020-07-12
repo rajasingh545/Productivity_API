@@ -1,7 +1,7 @@
 <?php
 error_reporting(E_ALL);
 ini_set("display_errors",1);
-// header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: *.vinaya');
 error_reporting(0);
 
 // session_start();
@@ -18,7 +18,7 @@ include_once $ROOTPATH."/lib/class.common.php";
 include_once $ROOTPATH."/conf/dbinfo.php";
 include_once $ROOTPATH."/conf/vars.php";
 
-define("BASEPATH","http://productivity-api.vinayak.com.sg/productivity-api/");
+define("BASEPATH","http://productivity.vinayak.com.sg/");
 
 //get use sessions
 $commonObj = new COMMON;
