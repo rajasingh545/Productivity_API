@@ -7,6 +7,7 @@ error_reporting(0);
 // session_start();
 
 //Global Class includes
+// $_SERVER['DOCUMENT_ROOT'] = "/home/vinayakc/public_html/"; //to be enabled in production
 $ROOTPATH = $_SERVER['DOCUMENT_ROOT']."/productivity-api";
 include_once $ROOTPATH."/lib/class.db.php";
 
@@ -17,7 +18,7 @@ include_once $ROOTPATH."/lib/class.common.php";
 include_once $ROOTPATH."/conf/dbinfo.php";
 include_once $ROOTPATH."/conf/vars.php";
 
-define("BASEPATH","http://productivity-api.macinc.in/productivity-api/");
+define("BASEPATH","http://productivity-api.vinayak.com.sg/productivity-api/");
 
 //get use sessions
 $commonObj = new COMMON;
