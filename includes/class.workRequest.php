@@ -23,7 +23,13 @@ class WORKREQUESTS
             $insertArr["scaffoldRegister"] = trim($postArr["scaffoldRegister"]);
 			$insertArr["createdOn"]=date("Y-m-d H:i:s");
 			$insertArr["createdBy"]=trim($postArr["userId"]);	
+			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
+			$insertArr["location"]=trim($postArr["location"]);	
 
+            if($insertArr["drawingAttach"]==1)
+                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            else
+                $insertArr["drawingImage"]='';
 			
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
@@ -69,6 +75,15 @@ class WORKREQUESTS
             $insertArr["scaffoldRegister"] = trim($postArr["scaffoldRegister"]);
 			$insertArr["createdOn"]=date("Y-m-d H:i:s");
 			$insertArr["createdBy"]=trim($postArr["userId"]);	
+
+			
+			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
+			$insertArr["location"]=trim($postArr["location"]);
+			
+            if($insertArr["drawingAttach"]==1)
+                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            else
+                $insertArr["drawingImage"]='';
 
 			
             $dbm = new DB;
@@ -251,19 +266,177 @@ class WORKREQUESTS
 		return $this->common->arrayToJson($usersArr);
     }
     
+    function getWorkRequestListDate($postArr){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		
+		$requestdata=$postArr['requestJsonData'];
+		$usersArr = array();
+        if(!empty($requestdata))
+        {
+            $fromdate=$postArr['requestJsonData']['startDate'];
+            $enddate=$postArr['requestJsonData']['endDate'];
+            $requesttype=$postArr['requestJsonData']['requestData']['id'];
+            $projectid=$postArr['requestJsonData']['selectedProjectData']['projectId'];
+            $clientid=$postArr['requestJsonData']['selectedClientData']['clientId'];
+            if(empty($fromdate))
+            {
+                $fromdate=date("Y-m-d");
+                $enddate=$fromdate;
+            }
+            else if(empty($enddate) && !empty($fromdate))
+                $enddate=$fromdate;
+            if(empty($requesttype))
+                $requesttype=1;
+            $addCond = "date(createdOn) between '".$fromdate."' and '".$enddate."'";    
+            if(!empty($projectid))
+                $addCond.=" and projectId=".$projectid;
+            if(!empty($clientid))
+                $addCond.=" and clientId=".$clientid;
+            
+            $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
+            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status");
+            $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+    		if($res[1] > 0){
+    			$usersArr = $db->fetchArray($res[0], 1);
+    			$projectnewlist=array();
+    			foreach($usersArr as $key=>$value)
+    			{
+    			    $usersArr[$key]["workbasedon"]="";
+                    $usersArr[$key]["requestSizeList"]=[];
+                    $usersArr[$key]["requestmanpower"]=[];
+                    
+    			    if($value['scaffoldRegister']==1)
+    			        $usersArr[$key]["scaffoldregister"]="Yes";
+    			    else
+    			        $usersArr[$key]["scaffoldregister"]="No";
+    			    $usersArr[$key]["remarks"]=$value['remarks'];
+    			    $projectid=$value['projectId'];
+    			    $selectFiledsitem=array("projectName");
+                    $whereClauseitem = "projectId=".$projectid;
+                    $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFiledsitem,$whereClauseitem);
+                    if($resitem[1] > 0){
+                        $itemList = $db->fetchArray($resitem[0]);
+                        $usersArr[$key]["projectname"]=$itemList['projectName'];
+                    }
+                    $client_id=$value['clientId'];
+    			    $selectFiledsitem=array("clientName");
+                    $whereClauseitem = "clientId=".$client_id;
+                    $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["CLIENTS"],$selectFiledsitem,$whereClauseitem);
+                    if($resitem[1] > 0){
+                        $itemList = $db->fetchArray($resitem[0]);
+                        $usersArr[$key]["clientname"]=$itemList['clientName'];
+                    }
+                    $usersArr[$key]["requestedby"]=$value['requestedBy'];
+                    if($value['contractType']==1)
+                        $usersArr[$key]["contracttype"]="Original Contract";
+                    else
+                        $usersArr[$key]["contracttype"]="Variation Works";
+                    $usersArr[$key]["description"]=$value['description'];
+                    
+    			    $wrequestid=$value['workRequestId'];
+    			    $selectFiledsitem=array("id","workRequestId","itemId","sizeType","previousWR","workBased","contractType");
+                    $whereClauseitem = "workRequestId='".$wrequestid."'";
+                    $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTITEMS"],$selectFiledsitem,$whereClauseitem);
+                    if($resitem[1] > 0){
+                        $itemList = $db->fetchArray($resitem[0],1);
+                        $k=0;
+                        $a =0;
+                        $b=0;
+                        foreach($itemList as $item){
+                            if($item["workBased"] == 1){
+                                $usersArr[$key]["workbasedon"]="Size";
+                                $selectFiledsSize=array("id","itemListId","scaffoldType","scaffoldWorkType","scaffoldSubCategory","length","height", "width","setcount");
+                                $whereClauseSize = "workRequestId='".$wrequestid."' and itemListId=".$item["id"];
+                                $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$selectFiledsSize,$whereClauseSize);
+                                if($resSize[1] > 0){
+                                    $sizeList = $db->fetchArray($resSize[0],1);
+                                    $i=0;
+                                    foreach($sizeList as $sizeDet){
+                                        $scaffoldworktype=$sizeDet['scaffoldWorkType'];
+                        			    $selectFiledsitem=array("scaffoldName");
+                                        $whereClauseitem = "id=".$scaffoldworktype;
+                                        $resitem_in=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["SCAFFOLDWORKTYPE"],$selectFiledsitem,$whereClauseitem);
+                                        if($resitem_in[1] > 0){
+                                            $itemList_in = $db->fetchArray($resitem_in[0]);
+                                            $usersArr[$key]["requestSizeList"][$a]["scaffoldworktype"]=$itemList_in['scaffoldName'];
+                                        }
+                                        $scaffoldtype=$sizeDet['scaffoldType'];
+                        			    $selectFiledsitem=array("scaffoldName");
+                                        $whereClauseitem = "id=".$scaffoldtype;
+                                        $resitem_in=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["SCAFFOLDTYPE"],$selectFiledsitem,$whereClauseitem);
+                                        if($resitem_in[1] > 0){
+                                            $itemList_in = $db->fetchArray($resitem_in[0]);
+                                            $scaffoldtypename=$itemList_in['scaffoldName'];
+                                            $usersArr[$key]["requestSizeList"][$a]["scaffoldtype"]=$itemList_in['scaffoldName'];
+                                        }
+                                        $scaffoldsubcategory=$sizeDet['scaffoldSubCategory'];
+                        			    $selectFiledsitem=array("scaffoldSubCatName");
+                                        $whereClauseitem = "scaffoldSubCateId=".$scaffoldsubcategory;
+                                        $resitem_in=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["SCAFFOLDSUBCATEGORY"],$selectFiledsitem,$whereClauseitem);
+                                        if($resitem_in[1] > 0){
+                                            $itemList_in = $db->fetchArray($resitem_in[0]);
+                                            $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
+                                        }
+                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH";
+                                        $a++;
+                                    }
+                                }
+                            }
+                            else if($item["workBased"] == 2){
+                                $usersArr[$key]["workbasedon"]="ManPower";
+                                $selectFiledsMan=array("id","itemListId","safety","supervisor","erectors","generalWorker","timeIn", "timeOut");
+                                $whereClauseMan = "workRequestId='".$wrequestid."' and itemListId=".$item["id"];
+                                $resMan=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTMANPOWER"],$selectFiledsMan,$whereClauseMan);
+                                if($resMan[1] > 0){
+                                    $manList = $db->fetchArray($resMan[0],1);
+                                    $j=0;
+                                    foreach($manList as $manDet){
+                                        $safety=$manDet['safety'];
+                                        $supervisor=$manDet['supervisor'];
+                                        $erectors=$manDet['erectors'];
+                                        $genworker=$manDet['generalWorker'];
+                                        $timein=$manDet['timeIn'];
+                                        $timeout=$manDet['timeOut'];
+                                        $usersArr[$key]["requestmanpower"][$b]=array("safety"=>$safety,"supervisor"=>$supervisor,"erectors"=>$erectors,"generalworker"=>$genworker,"timein"=>$timein,"timeout"=>$timeout);
+                                        $b++;
+                                    }
+                                }
+                            }
+                            $k++;
+                        }
+                    }
+    			}
+    		}
+        }
+		return $this->common->arrayToJson($usersArr);
+    }
+	
     function getWorkRequestDetails($postArr){
 
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status");
+		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","drawingAttach","drawingImage","completionImages","location");
     	$whereClause = "workRequestId='".$postArr["listingId"]."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
 		// pr($db);
 		$requestArr = array();
 		if($res[1] > 0){
             $requestArr["requestDetails"] = $db->fetchArray($res[0]);
+            if(!empty($requestArr["requestDetails"]['drawingImage']))
+            {
+                $tempimgname=BASEPATH.$requestArr["requestDetails"]['drawingImage'];
+                $requestArr["requestDetails"]['drawingImage'] = $tempimgname;
+            }
+            $tempimgsname=explode(",",$requestArr["requestDetails"]['completionImages']);
+            for($ik=0;$ik<count($tempimgsname);$ik++)
+            {
+                $tempimgsname[$ik]=BASEPATH.$tempimgsname[$ik];
+            }
+            $requestArr["requestDetails"]['completionImages']=$tempimgsname;
             
             $selectFiledsitem=array("id","workRequestId","itemId","sizeType","previousWR","workBased","contractType");
             $whereClauseitem = "workRequestId='".$postArr["listingId"]."'";
@@ -736,6 +909,129 @@ class WORKREQUESTS
 
          }
          return $this->common->arrayToJson($returnval);
+    }
+	function completeimageuploads($postArr){
+        $wrequestid=$postArr['workrequestid'];
+        if(isset($_FILES['images'])){
+            $filecount=count($_FILES['images']['name']);
+            $upload_url=array();
+            $upload_url_temp=array();
+            $folderpath="images/completedimage/";
+            
+            for($i=0;$i<$filecount;$i++)
+            {
+                $file_name = $_FILES['images']['name'][$i];
+                $file_size =$_FILES['images']['size'][$i];
+                $file_ext=strtolower(end(explode('.',$file_name)));
+                $extensions= array("jpeg","jpg","png","pdf");
+                if(in_array($file_ext,$extensions)=== false){
+                    $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF each file.";
+    			    $returnval["responsecode"] = 0;
+                    return $this->common->arrayToJson($returnval);
+                }
+                if($file_size > 500000){
+                    $returnval["response"] ="Each File size must be below 500 kb";
+    			    $returnval["responsecode"] = 0;
+                    return $this->common->arrayToJson($returnval);
+                }
+            }
+            
+            if(!file_exists($folderpath.$postArr["uniqueId"])) {
+                mkdir($folderpath.$postArr["uniqueId"], 0777, true);
+            }
+            
+            for($i=0;$i<$filecount;$i++)
+            {
+                $file_name = $_FILES['images']['name'][$i];
+                $file_size =$_FILES['images']['size'][$i];
+                $file_tmp =$_FILES['images']['tmp_name'][$i];   
+                $file_ext_orginal=end(explode('.',$file_name));
+                $file_ext=strtolower(end(explode('.',$file_name)));
+                
+                $filepath=$folderpath.$postArr["uniqueId"]."/".($i+1).'_'.time().".".$file_ext_orginal;
+                if(move_uploaded_file($file_tmp,$filepath)){
+                    $upload_url[]=BASEPATH.$filepath;
+                    $upload_url_temp[]=$filepath;
+                }
+            }
+            
+            if(!empty($upload_url_temp))
+            {   
+                $insertArr=array();
+                $uploadimg=implode(",",$upload_url_temp);
+                global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+                $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+
+                $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET completionImages='".$uploadimg."' WHERE workRequestId=".$wrequestid;
+                $insid = mysqli_query($connection, $sql);
+                if($insid)
+                {
+                    $returnval["response"] ="Image upload success";
+                    $returnval["imageurl"] =$upload_url;
+        		    $returnval["responsecode"] = 1;
+        		    return $this->common->arrayToJson($returnval);
+                }
+                else
+                {
+                    $returnval["response"] ="File Upload Failure";
+    			    $returnval["responsecode"] = 0;
+    			    return $this->common->arrayToJson($returnval);
+                }
+            }
+            else
+            {
+                $returnval["response"] ="File Upload Failure";
+			    $returnval["responsecode"] = 0;
+			    return $this->common->arrayToJson($returnval);
+            }
+        }
+        else
+        {
+            $returnval["response"] ="Image Need to Upload";
+		    $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
+    }
+	function drawingimageupload($postArr){
+        if(isset($_FILES['drawingimage'])){
+            $file_name = $_FILES['drawingimage']['name'];
+            $file_size =$_FILES['drawingimage']['size'];
+            $file_tmp =$_FILES['drawingimage']['tmp_name'];   
+            $file_ext_orginal=end(explode('.',$file_name));
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            
+            $extensions= array("jpeg","jpg","png","pdf");
+            if(in_array($file_ext,$extensions)=== false){
+                $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF file.";
+			    $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if($file_size > 500000){
+                $returnval["response"] ="File size must be below 500 kb";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if(!file_exists("images/drawingimage/".$postArr["uniqueId"])) {
+                mkdir("images/drawingimage/".$postArr["uniqueId"], 0777, true);
+            }
+            $filepath="images/drawingimage/".$postArr["uniqueId"]."/".time().".".$file_ext_orginal;
+            if(!move_uploaded_file($file_tmp,$filepath)){
+                $returnval["response"] ="Error in image upload";
+                $returnval["responsecode"] = 0; 
+                return $this->common->arrayToJson($returnval);
+            }
+            
+            $returnval["response"] ="Image upload success";
+            $returnval["imageurl"] =BASEPATH.$filepath;
+		    $returnval["responsecode"] = 1;
+            return $this->common->arrayToJson($returnval);
+        }
+        else
+        {
+            $returnval["response"] ="Image Need to Upload";
+		    $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
     }
 }
 

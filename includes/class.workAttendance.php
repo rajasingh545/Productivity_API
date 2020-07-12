@@ -699,6 +699,8 @@ class REQUESTS
 
 				if($val["reason"] != "")
 					$updateArr["reason"] = $val["reason"];
+				else
+				    $updateArr["reason"]=0;
 
 				if($postArr["selectedOption"] == 1)
 					$updateArr["status"] = $postArr["type"];
