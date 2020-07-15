@@ -535,7 +535,17 @@ class WORKREQUESTS
 			$insertArr["requestedBy"]=trim($postArr["requestBy"]);
             $insertArr["remarks"]=trim($postArr["remarks"]);
             $insertArr["workRequestId"] = trim($postArr["value_wrno"]);
-            $insertArr["supervisor"]=trim($postArr["value_supervisor"]);
+            //$insertArr["supervisor"]=trim($postArr["value_supervisor"]);
+            $fieldsupervisors=$postArr["fieldSupervisors"];
+            $fieldsuper=array();
+            foreach($fieldsupervisors as $value){
+                if($value['selected'] && $value['selected']==true)
+                {
+                    $fieldsuper[]=$value['userId'];
+                }
+            }
+            $supervisors=implode(",",$fieldsuper);
+            $insertArr["supervisor"]=$supervisors;
             $insertArr["baseSupervisor"]=trim($postArr["value_basesupervisor"]);
              $insertArr["matMisuse"]=trim($postArr["matMisuse"]);
             $insertArr["matRemarks"] = trim($postArr["matmisueremarks"]);
@@ -593,8 +603,17 @@ class WORKREQUESTS
             $insertArr["photo_1"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_1");
             $insertArr["photo_2"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_2");
             $insertArr["photo_3"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_3");
-            $insertArr["supervisor"]=trim($postArr["value_supervisor"]);
-            	
+            //$insertArr["supervisor"]=trim($postArr["value_supervisor"]);
+            $fieldsupervisors=$postArr["fieldSupervisors"];
+            $fieldsuper=array();
+            foreach($fieldsupervisors as $value){
+                if($value['selected'] && $value['selected']==true)
+                {
+                    $fieldsuper[]=$value['userId'];
+                }
+            }
+            $supervisors=implode(",",$fieldsuper);
+            $insertArr["supervisor"]=$supervisors;	
             $insertArr["baseSupervisor"]=trim($postArr["value_basesupervisor"]);
              $insertArr["matMisuse"]=trim($postArr["matMisuse"]);
             $insertArr["matRemarks"] = trim($postArr["matmisueremarks"]);
@@ -781,6 +800,8 @@ class WORKREQUESTS
 		if($res[1] > 0){
             $listArr = $db->fetchArray($res[0]);
 
+            $temp_supervisor=$listArr["supervisor"];
+            $listArr["supervisor"]=explode(",",$temp_supervisor);
             $photosOther = $this->getDWTRPhotos($postArr["listingId"],0);
             $listArr["photo_1"] = $photosOther["photo_1"];
             $listArr["photo_2"] = $photosOther["photo_2"];
