@@ -37,7 +37,7 @@ class commonAPI
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("projectId","projectName");		
+		$selectFileds=array("projectId","projectName","startTime","endTime");		
 		$whereClause = "projectStatus='1'";	
 		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
