@@ -430,19 +430,33 @@ class commonAPI
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-
-		$whereClause = "project like '%$projectId%' and userStatus=1 ";
-		$selectFileds=array("userId","Name");
-		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
-		$supervisors = array();
-		if($res[1] > 0){
-			$supervisors["supervisors"] = $db->fetchArray($res[0], 1);          	
-			
-		}
-		else{
-			$supervisors["supervisors"]=array(); 
-		}
 		
+        $whereClause = "projectId=".$projectId;
+		$selectFileds=array("userId");
+		$res1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
+		$supervisors = array();
+		if($res1[1] > 0){
+			$basesupervisor = $db->fetchArray($res1[0]);
+			$basesupervisor=$basesupervisor['userId'];
+			$supervisors["basesupervisor"]=[];
+			$whereClause_1 = "userStatus=1 and userId=".$basesupervisor;
+            $selectFileds_1=array("userId","Name");
+            $res_1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds_1,$whereClause_1);
+            if($res_1[1] > 0){
+                $supervisors["basesupervisor"] = $db->fetchArray($res_1[0], 1);          	
+            }
+			
+            $whereClause_2 = "project like '%$projectId%' and userStatus=1 and userId!=".$basesupervisor;
+            $selectFileds_2=array("userId","Name");
+            $res_2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds_2,$whereClause_2);
+            if($res_2[1] > 0){
+                $supervisors["supervisors"] = $db->fetchArray($res_2[0], 1);          	
+            
+            }
+            else{
+                $supervisors["supervisors"]=array(); 
+            }
+		}
 		return $this->common->arrayToJson($supervisors);
 
 	}
