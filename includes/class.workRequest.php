@@ -604,7 +604,7 @@ class WORKREQUESTS
             $insertArr["photo_2"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_2");
             $insertArr["photo_3"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_3");
             //$insertArr["supervisor"]=trim($postArr["value_supervisor"]);
-            $fieldsupervisors=$postArr["fieldSupervisors"];
+            $fieldsupervisors=$postArr["supervisors"];
             $fieldsuper=array();
             foreach($fieldsupervisors as $value){
                 if($value['selected'] && $value['selected']==true)
@@ -621,7 +621,7 @@ class WORKREQUESTS
             $insertArr["safetyVio"]=trim($postArr["safetyvio"]);
             $insertArr["safetyRemarks"]=trim($postArr["safetyvioremarks"]);	
             $insertArr["safetyPhoto"]=$this->fileGetContents(trim($postArr["uniqueId"]),"safetyPhoto");
-           $insertArr["createdOn"] = date("Y-m-d H:i:s");	
+           //$insertArr["createdOn"] = date("Y-m-d H:i:s");	
            $insertArr["status"] = trim($postArr["listingstatus"]);
            $insertArr["uniqueId"] = trim($postArr["uniqueId"]);
         
