@@ -24,7 +24,7 @@ class WORKREQUESTS
 			$insertArr["createdOn"]=date("Y-m-d H:i:s");
 			$insertArr["createdBy"]=trim($postArr["userId"]);	
 			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
-			$insertArr["location"]=trim($postArr["location"]);	
+			$insertArr["location"]=trim($postArr["location1"]);	
 
             if($insertArr["drawingAttach"]==1)
                 $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
@@ -78,7 +78,7 @@ class WORKREQUESTS
 
 			
 			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
-			$insertArr["location"]=trim($postArr["location"]);
+			$insertArr["location"]=trim($postArr["location1"]);
 			
             if($insertArr["drawingAttach"]==1)
                 $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
@@ -296,7 +296,7 @@ class WORKREQUESTS
                 $addCond.=" and clientId=".$clientid;
             
             $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
-            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status");
+            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location");
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
     		if($res[1] > 0){
     			$usersArr = $db->fetchArray($res[0], 1);
@@ -328,7 +328,7 @@ class WORKREQUESTS
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["clientname"]=$itemList['clientName'];
                     }
-                    $usersArr[$key]["requestedby"]=$value['requestedBy'];
+                    $usersArr[$key]["location"]=$value['location'];
                     if($value['contractType']==1)
                         $usersArr[$key]["contracttype"]="Original Contract";
                     else
@@ -431,12 +431,21 @@ class WORKREQUESTS
                 $tempimgname=BASEPATH.$requestArr["requestDetails"]['drawingImage'];
                 $requestArr["requestDetails"]['drawingImage'] = $tempimgname;
             }
-            $tempimgsname=explode(",",$requestArr["requestDetails"]['completionImages']);
-            for($ik=0;$ik<count($tempimgsname);$ik++)
-            {
-                $tempimgsname[$ik]=BASEPATH.$tempimgsname[$ik];
+            else{
+                $requestArr["requestDetails"]['drawingImage'] = "";
             }
-            $requestArr["requestDetails"]['completionImages']=$tempimgsname;
+            if(!empty($requestArr["requestDetails"]['completionImages']))
+            {
+                $tempimgsname=explode(",",$requestArr["requestDetails"]['completionImages']);
+                for($ik=0;$ik<count($tempimgsname);$ik++)
+                {
+                    $tempimgsname[$ik]=BASEPATH.$tempimgsname[$ik];
+                }
+                $requestArr["requestDetails"]['completionImages']=$tempimgsname;
+            }
+            else{
+                $requestArr["requestDetails"]['completionImages']="";
+            }
             
             $selectFiledsitem=array("id","workRequestId","itemId","sizeType","previousWR","workBased","contractType");
             $whereClauseitem = "workRequestId='".$postArr["listingId"]."'";
@@ -522,11 +531,21 @@ class WORKREQUESTS
        
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["clientId"]=trim($postArr["value_clients"]);
-			$insertArr["type"]=trim($postArr["cType"]);;
+			$insertArr["type"]=trim($postArr["cType"]);
 			$insertArr["requestedBy"]=trim($postArr["requestBy"]);
             $insertArr["remarks"]=trim($postArr["remarks"]);
             $insertArr["workRequestId"] = trim($postArr["value_wrno"]);
-            $insertArr["supervisor"]=trim($postArr["value_supervisor"]);
+            //$insertArr["supervisor"]=trim($postArr["value_supervisor"]);
+            $fieldsupervisors=$postArr["fieldSupervisors"];
+            $fieldsuper=array();
+            foreach($fieldsupervisors as $value){
+                if($value['selected'] && $value['selected']==true)
+                {
+                    $fieldsuper[]=$value['userId'];
+                }
+            }
+            $supervisors=implode(",",$fieldsuper);
+            $insertArr["supervisor"]=$supervisors;
             $insertArr["baseSupervisor"]=trim($postArr["value_basesupervisor"]);
              $insertArr["matMisuse"]=trim($postArr["matMisuse"]);
             $insertArr["matRemarks"] = trim($postArr["matmisueremarks"]);
@@ -577,15 +596,24 @@ class WORKREQUESTS
        
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["clientId"]=trim($postArr["value_clients"]);
-			$insertArr["type"]=trim($postArr["cType"]);;
+			$insertArr["type"]=trim($postArr["cType"]);
 			$insertArr["requestedBy"]=trim($postArr["requestBy"]);
             $insertArr["remarks"]=trim($postArr["remarks"]);
             $insertArr["workRequestId"] = trim($postArr["value_wrno"]);
             $insertArr["photo_1"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_1");
             $insertArr["photo_2"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_2");
             $insertArr["photo_3"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_3");
-            $insertArr["supervisor"]=trim($postArr["value_supervisor"]);
-            	
+            //$insertArr["supervisor"]=trim($postArr["value_supervisor"]);
+            $fieldsupervisors=$postArr["supervisors"];
+            $fieldsuper=array();
+            foreach($fieldsupervisors as $value){
+                if($value['selected'] && $value['selected']==true)
+                {
+                    $fieldsuper[]=$value['userId'];
+                }
+            }
+            $supervisors=implode(",",$fieldsuper);
+            $insertArr["supervisor"]=$supervisors;	
             $insertArr["baseSupervisor"]=trim($postArr["value_basesupervisor"]);
              $insertArr["matMisuse"]=trim($postArr["matMisuse"]);
             $insertArr["matRemarks"] = trim($postArr["matmisueremarks"]);
@@ -593,7 +621,7 @@ class WORKREQUESTS
             $insertArr["safetyVio"]=trim($postArr["safetyvio"]);
             $insertArr["safetyRemarks"]=trim($postArr["safetyvioremarks"]);	
             $insertArr["safetyPhoto"]=$this->fileGetContents(trim($postArr["uniqueId"]),"safetyPhoto");
-           $insertArr["createdOn"] = date("Y-m-d H:i:s");	
+           //$insertArr["createdOn"] = date("Y-m-d H:i:s");	
            $insertArr["status"] = trim($postArr["listingstatus"]);
            $insertArr["uniqueId"] = trim($postArr["uniqueId"]);
         
@@ -772,6 +800,8 @@ class WORKREQUESTS
 		if($res[1] > 0){
             $listArr = $db->fetchArray($res[0]);
 
+            $temp_supervisor=$listArr["supervisor"];
+            $listArr["supervisor"]=explode(",",$temp_supervisor);
             $photosOther = $this->getDWTRPhotos($postArr["listingId"],0);
             $listArr["photo_1"] = $photosOther["photo_1"];
             $listArr["photo_2"] = $photosOther["photo_2"];
