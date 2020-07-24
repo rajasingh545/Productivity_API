@@ -435,15 +435,24 @@ class commonAPI
 		$selectFileds=array("userId");
 		$res1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
 		$supervisors = array();
+		$supervisors["basesupervisor"]=array();
+		$supervisors["assignedbasesupervisors"]="no";
 		if($res1[1] > 0){
 			$basesupervisor = $db->fetchArray($res1[0]);
 			$basesupervisor=$basesupervisor['userId'];
-			$supervisors["basesupervisor"]=[];
 			$whereClause_1 = "userStatus=1 and userId=".$basesupervisor;
             $selectFileds_1=array("userId","Name");
             $res_1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds_1,$whereClause_1);
             if($res_1[1] > 0){
                 $supervisors["basesupervisor"] = $db->fetchArray($res_1[0], 1);          	
+            }
+            
+            $whereClause_3 = "status=1 and baseSupervisor=".$basesupervisor." and date(createdOn)='".date("Y-m-d")."'";
+            $selectFileds_3=array("worktrackId");
+            $res_3=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$selectFileds_3,$whereClause_3);
+            if($res_3[1] > 0){
+                $temp = $db->fetchArray($res_3[0], 1);
+                $supervisors["assignedbasesupervisors"]="yes";
             }
 			
             $whereClause_2 = "project like '%$projectId%' and userStatus=1 and userId!=".$basesupervisor;
