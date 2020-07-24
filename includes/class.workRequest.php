@@ -762,7 +762,7 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("worktrackId","projectId","clientId","requestedBy");
+		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","remarks","workRequestId");
 
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			$addCond = "date(createdOn)='".$postArr["startDate"]."'";
@@ -777,6 +777,78 @@ class WORKREQUESTS
 		$usersArr = array();
 		if($res[1] > 0){
 			$usersArr = $db->fetchArray($res[0], 1);
+			foreach($usersArr as $key=>$trackvalue)
+			{
+			    $usersArr[$key]["requestItems"]=[];
+			    $usersArr[$key]["requestSizeList"]=[];
+			    $usersArr[$key]["requestMatList"]=[];
+			    $wtrackid=$trackvalue["worktrackId"];
+                $selectFiledsitem=array("id","workRequestId", "subDivisionId","length", "height","width","setcount","status");
+                $whereClauseitem = "worktrackId='".$wtrackid."'";
+                $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$selectFiledsitem,$whereClauseitem);
+                if($resitem[1] > 0){
+                    $itemList = $db->fetchArray($resitem[0],1);
+                    $k=0;
+                    foreach($itemList as $item){
+                        $item["WR_text"] = "WR".str_pad($item["workRequestId"], 4, '0', STR_PAD_LEFT);
+                        if($item["status"]==1){
+                            $cstatus="Ongoing";
+                        }
+                        else if($item["status"]==1){
+                            $cstatus="Completed";
+                        }
+                        else{
+                            $cstatus="Full Size";
+                        }
+                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - ".$cstatus;
+                        $usersArr[$key]["requestItems"][$k] = $item;
+                        $k++;
+                    }
+                }
+                $selectFiledsSize=array("id","subDevisionId","workTrackId","teamId","workerCount","inTime","outTime");
+                $whereClauseSize = "workTrackId='".$wtrackid."'";
+                $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$selectFiledsSize,$whereClauseSize);
+                if($resSize[1] > 0){
+                    $sizeList = $db->fetchArray($resSize[0],1);
+                    $i=0;
+                    foreach($sizeList as $sizeDet){
+                        $teamid=$sizeDet["teamId"];
+                        $sizeDet["teamname"]='';
+                        $selectFiledsteam=array("teamName");
+                        $whereClauseteam = "teamid='".$teamid."'";
+                        $resteam=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["TEAM"],$selectFiledsteam,$whereClauseteam);
+                        if($resteam[1] > 0){
+                            $teamname = $db->fetchArray($resteam[0]);
+                            $sizeDet["teamname"]=$teamname["teamName"];
+                        }
+                        $sizeDet["expandteams"]=$sizeDet["teamname"]." - ".$sizeDet["inTime"]." to ".$sizeDet["outTime"];
+                        $usersArr[$key]["requestSizeList"][$i] = $sizeDet;
+                        $i++;
+                    }
+                    
+                }
+                $selectFiledsMan=array("id","workTrackId","subDevisionId","material","workerCount","inTime","outTime");
+                $whereClauseMan = "workTrackId='".$wtrackid."'";
+                $resMan=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKMATERIALS"],$selectFiledsMan,$whereClauseMan);
+                if($resMan[1] > 0){
+                    $manList = $db->fetchArray($resMan[0],1);
+                    $j=0;
+                    foreach($manList as $manDet){
+                        $materialid=$manDet["material"];
+                        $manDet["materialname"]='';
+                        $selectFiledsmat=array("materialName");
+                        $whereClausemat = "id='".$materialid."'";
+                        $resmat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["MATERIAL"],$selectFiledsmat,$whereClausemat);
+                        if($resmat[1] > 0){
+                            $materialname = $db->fetchArray($resmat[0]);
+                            $manDet["materialname"]=$materialname["materialName"];
+                        }
+                        $manDet["expandmaterials"]=$manDet["materialname"]." - ".$manDet["inTime"]." to ".$manDet["outTime"];
+                        $usersArr[$key]["requestMatList"][$j] = $manDet;
+                        $j++;
+                    }
+                }
+			}
 		}
 		// pr($usersArr);
  
