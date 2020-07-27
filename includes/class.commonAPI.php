@@ -202,11 +202,11 @@ class commonAPI
 
 
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and partial=0 $addWhere";
-		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0 $addWhere";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00')) $addWhere";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 			//$whereClauseat = "forDate='".$postArr["startDate"]."' and partial=0 $addWhere";
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and partial=0 $addWhere";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00')) $addWhere";
 		}
 		// echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
@@ -337,11 +337,12 @@ class commonAPI
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime='00:00:00'))";
 		}
+		//echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
 			$workerIds = $db->fetchArray($resat[0], 1);  
@@ -372,11 +373,11 @@ class commonAPI
 		}
 		
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00'";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 			//$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00'";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00'))";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
@@ -435,15 +436,24 @@ class commonAPI
 		$selectFileds=array("userId");
 		$res1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
 		$supervisors = array();
+		$supervisors["basesupervisor"]=array();
+		$supervisors["assignedbasesupervisors"]="no";
 		if($res1[1] > 0){
 			$basesupervisor = $db->fetchArray($res1[0]);
 			$basesupervisor=$basesupervisor['userId'];
-			$supervisors["basesupervisor"]=[];
 			$whereClause_1 = "userStatus=1 and userId=".$basesupervisor;
             $selectFileds_1=array("userId","Name");
             $res_1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds_1,$whereClause_1);
             if($res_1[1] > 0){
                 $supervisors["basesupervisor"] = $db->fetchArray($res_1[0], 1);          	
+            }
+            
+            $whereClause_3 = "status=1 and baseSupervisor=".$basesupervisor." and date(createdOn)='".date("Y-m-d")."'";
+            $selectFileds_3=array("worktrackId");
+            $res_3=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$selectFileds_3,$whereClause_3);
+            if($res_3[1] > 0){
+                $temp = $db->fetchArray($res_3[0], 1);
+                $supervisors["assignedbasesupervisors"]="yes";
             }
 			
             $whereClause_2 = "project like '%$projectId%' and userStatus=1 and userId!=".$basesupervisor;

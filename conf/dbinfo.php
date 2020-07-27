@@ -30,6 +30,7 @@ $TABLEINFO["DAILYWORKTRACK"] = "p_dailyworktrack";
 $TABLEINFO["DAILYWORKTRACKSUBDIVISION"] = "p_dailyworktracksubdivision";
 $TABLEINFO["DAILYWORKTRACKTEAMS"] = "p_dailyworktrackteams";
 $TABLEINFO["DAILYWORKTRACKMATERIALS"] = "p_dailyworktrackmaterials";
+$TABLEINFO["MATERIAL"] = "p_material";
 
 $TABLEINFO["TRANSFERHISTORY"] = "v_transferhistory";
 $TABLEINFO["PROJECTREPORT"] = "v_projectreport";
