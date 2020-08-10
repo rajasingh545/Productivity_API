@@ -11,21 +11,22 @@ $requestObj = new REQUESTS();
  $obj = json_decode($json, true);
 //  $obj = $_POST;
 //  pr($obj);exit;
- if($obj["requestCode"] === 1){ //create
+ if($obj["requestCode"] == 1){ //create
     $response = $requestObj->createWorkArranments($obj);
  }
- elseif($obj["requestCode"] === 2){
+ elseif($obj["requestCode"] == 2){
      
      $response = $requestObj->getWorkArrangementList($obj);
+	
  }
- elseif($obj["requestCode"] === 3){
+ elseif($obj["requestCode"] == 3){
      $response = $requestObj->getWorkArrangementDetails($obj);
  }
  elseif($obj["requestCode"] === 4){
      
      $response = $requestObj->updateWorkArranmentsStatus($obj);
  }
- elseif($obj["requestCode"] === 5){
+ elseif($obj["requestCode"] == 5){
 
      $response = $requestObj->updateWorkArranments($obj);
  }
