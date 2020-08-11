@@ -15,7 +15,7 @@ class REQUESTS
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		
+		$requestType = $postArr["requestType"];
 		$userID = $postArr["userId"];
 		$userType = $postArr["userType"];
 		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks");
@@ -24,8 +24,8 @@ class REQUESTS
 				$addCond = "createdOn='".$postArr["startDate"]."'";
 			}
 			else{
-				//$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID or addSupervsor like '%$userID%')";
-				$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID)";
+				$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID or addSupervsor like '%$userID%')";
+				//$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID)";
 				
 			}
 			
@@ -33,7 +33,11 @@ class REQUESTS
 		else{
 			$addCond = "createdOn='".date("Y-m-d")."'";
 		}		
-		$whereClause = "status=".$postArr["requestType"]." AND $addCond order by workArrangementId desc";		
+		if ($requestType == '')
+		{
+			$requestType='2';
+		}
+		$whereClause = "status=".$requestType." AND $addCond order by workArrangementId desc";		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
 		$results = array();
 		$projectArr = array();
@@ -134,7 +138,7 @@ class REQUESTS
     		}
 	    }
 		return $this->common->arrayToJson($results);
-	}
+		}
 	function getWorkArrangementDetails($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
@@ -156,7 +160,7 @@ class REQUESTS
 		    if(!empty($workeridlist))
 		    {
 		        $workeridlist=implode(',',$workeridlist);
-		        $whereClause = "workerId IN(".$workeridlist.") and forDate='".$selecteddate."' and (partial=0 or (partial=1 and outTime='00:00:00')) and draftStatus=1";
+		        $whereClause = "workerId IN(".$workeridlist.") and forDate='".$selecteddate."' and outTime='00:00:00' and draftStatus=1";
         		$selectFileds2 = array("workerId");
         		$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause);
         		if($res2[1] > 0){
@@ -194,7 +198,10 @@ class REQUESTS
 					$workerids = $db->fetchArray($res2[0],1); 
 					$workeridFinal = array();
 					$partialWorkers = array();
+					$partialBaseSupervisors = array();
 					$partialsupervisor = array();
+					$temp_base_sup[]=$projectArr['baseSupervsor'];
+                    $temp_base_sup=implode(',',$temp_base_sup);
 					foreach($workerids as $ids){
 						if($ids["isSupervisor"]==0)
 					    {
@@ -205,15 +212,25 @@ class REQUESTS
 					    }
 					    else
 					    {
-    						if($ids["partial"] == 1){
-    							$partialsupervisor[] = $ids["workerId"];
-    						}
+							if($ids["partial"] == 1){
+								//foreach($temp_base_sup as $baseSupervisorIds)
+								{
+									
+										if($ids["workerId"] == $projectArr['baseSupervsor'])
+										 {	
+											$partialBaseSupervisors[] = $ids["workerId"];
+										 }else{
+											$partialsupervisor[] = $ids["workerId"]; 
+										}			
+								}
+							}								
 					    }
+						
 					}
-					
                     $projectArr["workers"] = $workeridFinal;
 					$projectArr["partialWorkers"] = $partialWorkers;
 					$projectArr["partialsupervisor"] = $partialsupervisor;
+					$projectArr["partialBaseSupervisors"] = $partialBaseSupervisors;
                     $projectArr["workdraft"] = $workassigned;
                     $getavailaleworkersup = $this->availableworkersupervisorDetails($project_id,$selecteddate);
                     if(!empty($getavailaleworkersup))
@@ -316,7 +333,7 @@ class REQUESTS
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
 		$selectFiledsat=array("workerId");
 		if($date != ""){
-			$whereClauseat = "forDate='".$date."' and draftStatus=1 and (partial=0 or (partial=1 and outTime='00:00:00')) and isSupervisor=1";
+			$whereClauseat = "forDate='".$date."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
@@ -350,7 +367,7 @@ class REQUESTS
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
 		$selectFiledsat=array("workerId");
 		if($date != ""){
-			$whereClauseat = "forDate='".$date."' and draftStatus=1 and (partial=0 or (partial=1 and outTime='00:00:00')) and isSupervisor=0";
+			$whereClauseat = "forDate='".$date."' and draftStatus=1 and outTime='00:00:00'";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
@@ -433,6 +450,7 @@ class REQUESTS
         $base_sup=$insertArr["baseSupervsor"];
         $addsuplist=$postArr["value_supervisors2"];
         $partialsuper=$postArr["partialSupervisors"];
+		$basePartialSupervisor=$postArr["selectedItemsBaseSup"];
         $work_arr_id=$postArr["listingId"];
         $for_date=trim($postArr["startDate"]);
         
@@ -533,6 +551,10 @@ class REQUESTS
 		}
 		if(!empty($base_sup))
 		{
+			$t_partial = 0;
+			foreach($basePartialSupervisor as $value){
+					$t_partial=$value['isPartial'];
+			}
             $ins = array();
             $ins["workArrangementId"]=$work_arr_id;
             $ins["workerId"]=$base_sup;       
@@ -542,12 +564,13 @@ class REQUESTS
             if($work_arr_status==1){
                 $ins["draftStatus"] = 1;
             }
+			$ins["partial"] = $t_partial;
             $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$ins,1,2);
 		}
         $dbm->dbClose();
         $returnval["response"] ="success";
 		$returnval["responsecode"] = 1; 
-		$returnval["requestID"] = $requestNumber; 
+		//$returnval["requestID"] = $requestNumber; 
 	    return $this->common->arrayToJson($returnval);
 	}
 
@@ -783,7 +806,7 @@ class REQUESTS
 			$insid = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$insertArr,1,2);
 			
 			// tracking supervisor attendance
-			$this->insertSupervisorAttendance($insid, $postArr["value_supervisors"], $postArr["startDate"]);
+			$this->insertSupervisorAttendance($insid, $postArr["value_supervisors"], $postArr["startDate"],$postArr["supervisors"]);
 			if(trim($postArr["selectedItemsAddSup"]) != "" || !empty($postArr["selectedItemsAddSup"])){
 				$this->insertaddSupervisorAttendance($insid, $postArr["selectedItemsAddSup"], $postArr["startDate"]);
 			}
@@ -828,16 +851,29 @@ class REQUESTS
 		return $this->common->arrayToJson($returnval);
 	}
 		
-	function insertSupervisorAttendance($insid, $supervisor, $startDate){
+	function insertSupervisorAttendance($insid, $supervisor, $startDate,$supervisors){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$dbm = new DB;
 		$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		$ins = array();
+		$t_partial=false;
+		//if(trim($selectedSupervisors) != "" || !empty($selectedSupervisors)){
+				foreach($supervisors as $value){
+					$t_userid=$value['userId'];
+					if($t_userid == $supervisor)
+					{					 
+						$t_partial=$value['isPartial'];
+					    break;
+					
+				   }
+				}
+			//}
 		$ins["workArrangementId"]=$insid;
 		$ins["workerId"]=$supervisor;       
 		$ins["forDate"]=$startDate;
 		$ins["createdOn"]=date("Y-m-d H:i:s");
 		$ins["isSupervisor"] = 1;
+		$ins["partial"] = $t_partial;
 		$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$ins,1,2);
 		
 	}
