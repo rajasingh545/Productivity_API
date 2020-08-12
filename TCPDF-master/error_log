@@ -1,0 +1,12 @@
+[29-Jul-2020 09:41:57 UTC] PHP Fatal error:  Uncaught Error: Class 'TCPDF' not found in /home/y6phcw4v16ef/public_html/productivity-api.macinc.in/productivity-api/TCPDF-master/index.php:31
+Stack trace:
+#0 {main}
+  thrown in /home/y6phcw4v16ef/public_html/productivity-api.macinc.in/productivity-api/TCPDF-master/index.php on line 31
+[29-Jul-2020 09:42:26 UTC] PHP Fatal error:  Uncaught Error: Class 'TCPDF' not found in /home/y6phcw4v16ef/public_html/productivity-api.macinc.in/productivity-api/TCPDF-master/index.php:31
+Stack trace:
+#0 {main}
+  thrown in /home/y6phcw4v16ef/public_html/productivity-api.macinc.in/productivity-api/TCPDF-master/index.php on line 31
+[29-Jul-2020 09:42:59 UTC] PHP Fatal error:  Uncaught Error: Class 'TCPDF' not found in /home/y6phcw4v16ef/public_html/productivity-api.macinc.in/productivity-api/TCPDF-master/index.php:31
+Stack trace:
+#0 {main}
+  thrown in /home/y6phcw4v16ef/public_html/productivity-api.macinc.in/productivity-api/TCPDF-master/index.php on line 31

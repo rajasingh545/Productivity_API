@@ -1013,11 +1013,26 @@ class WORKREQUESTS
          return $this->common->arrayToJson($returnval);
     }
 	function completeimageuploads($postArr){
+	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+        $dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        
         $wrequestid=$postArr['workrequestid'];
+        $upload_url_temp=array();
+        $selectFiledsSize=array("completionImages");
+        $whereClauseSize = "workRequestId='".$wrequestid."'";
+        $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFiledsSize,$whereClauseSize);
+        if($resSize[1] > 0){
+            $workList = $db->fetchArray($resSize[0]);
+            if($workList["completionImages"])
+            {
+                $upload_url_temp=explode(",",$workList["completionImages"]);
+            }
+        }
+	    
         if(isset($_FILES['images'])){
             $filecount=count($_FILES['images']['name']);
             $upload_url=array();
-            $upload_url_temp=array();
             $folderpath="images/completedimage/";
             
             for($i=0;$i<$filecount;$i++)
@@ -1042,6 +1057,7 @@ class WORKREQUESTS
                 mkdir($folderpath.$postArr["uniqueId"], 0777, true);
             }
             
+            $count=count($upload_url_temp);
             for($i=0;$i<$filecount;$i++)
             {
                 $file_name = $_FILES['images']['name'][$i];
@@ -1050,7 +1066,7 @@ class WORKREQUESTS
                 $file_ext_orginal=end(explode('.',$file_name));
                 $file_ext=strtolower(end(explode('.',$file_name)));
                 
-                $filepath=$folderpath.$postArr["uniqueId"]."/".($i+1).'_'.time().".".$file_ext_orginal;
+                $filepath=$folderpath.$postArr["uniqueId"]."/".($count+($i+1)).'_'.time().".".$file_ext_orginal;
                 if(move_uploaded_file($file_tmp,$filepath)){
                     $upload_url[]=BASEPATH.$filepath;
                     $upload_url_temp[]=$filepath;
@@ -1124,7 +1140,8 @@ class WORKREQUESTS
             }
             
             $returnval["response"] ="Image upload success";
-            $returnval["imageurl"] =BASEPATH.$filepath;
+            $returnval["imageurl"] =$filepath;
+            $returnval["basepath"] =BASEPATH;
 		    $returnval["responsecode"] = 1;
             return $this->common->arrayToJson($returnval);
         }

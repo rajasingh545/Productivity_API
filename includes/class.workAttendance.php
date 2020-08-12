@@ -160,7 +160,7 @@ class REQUESTS
 		    if(!empty($workeridlist))
 		    {
 		        $workeridlist=implode(',',$workeridlist);
-		        $whereClause = "workerId IN(".$workeridlist.") and forDate='".$selecteddate."' and outTime='00:00:00' and draftStatus=1";
+		        $whereClause = "workerId IN(".$workeridlist.") and forDate='".$selecteddate."' and (partial=0 or (partial=1 and outTime='00:00:00')) and draftStatus=1";
         		$selectFileds2 = array("workerId");
         		$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause);
         		if($res2[1] > 0){
@@ -333,7 +333,7 @@ class REQUESTS
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
 		$selectFiledsat=array("workerId");
 		if($date != ""){
-			$whereClauseat = "forDate='".$date."' and draftStatus=1 and outTime='00:00:00' and isSupervisor=1";
+			$whereClauseat = "forDate='".$date."' and draftStatus=1 and (partial=0 or (partial=1 and outTime='00:00:00')) and isSupervisor=1";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
@@ -367,7 +367,7 @@ class REQUESTS
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
 		$selectFiledsat=array("workerId");
 		if($date != ""){
-			$whereClauseat = "forDate='".$date."' and draftStatus=1 and outTime='00:00:00'";
+			$whereClauseat = "forDate='".$date."' and draftStatus=1 and (partial=0 or (partial=1 and outTime='00:00:00')) and isSupervisor=0";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
