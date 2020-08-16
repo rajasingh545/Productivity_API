@@ -38,7 +38,7 @@ $requestObj = new REQUESTS();
 
      $response = $requestObj->updateAttendance($obj);
  }
- elseif($obj["requestCode"] === 8){
+ elseif($obj["requestCode"] == 8){
 
      $response = $requestObj->getSubmittedAttendanceList($obj);
  }
@@ -74,6 +74,8 @@ elseif($obj["requestCode"] === 15){
 }
 elseif($obj["requestCode"] === 16){
     $response = $requestObj->deletedraftworkarrangement($obj);
+}else if ($obj["requestCode"] == 17){
+$response = $requestObj->deleteSubmittedworkarrangement($obj);
 }
 
 echo $response;
