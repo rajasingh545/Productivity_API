@@ -14,7 +14,8 @@ if($requestCode == 1){
     $apis = $apiObj->availableworkersupervisorDetails($projectId,$obj);
 }
 else if($requestCode == 99){
-    $apis = $apiObj->availableWorkerDetails($obj);
+    
+    $apis = $apiObj->availableWorkerDetails($obj, true);
 }
 else if($requestCode == 5){
     $apis = $apiObj->getContracts($obj);
