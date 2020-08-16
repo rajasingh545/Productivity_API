@@ -187,7 +187,7 @@ class commonAPI
  
 		return $newWorkerArr;
 	}
-	function availableWorkerDetails($postArr){
+	function availableWorkerDetails($postArr, $json = false){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
@@ -200,13 +200,13 @@ class commonAPI
 			$addWhere = " and workArrangementId != $workArrangmentId";
 		}
 
-
+// Jeeva on 16-aug: Draft Status either 'submitted' or 'Draft', both status to be included as per vinayak team hence removing the condition draftStatus=1 */
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and partial=0 $addWhere";
-		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00')) $addWhere";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00')) $addWhere";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 			//$whereClauseat = "forDate='".$postArr["startDate"]."' and partial=0 $addWhere";
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00')) $addWhere";
+			 $whereClauseat = "forDate='".$postArr["startDate"]."' and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00')) $addWhere";
 		}
 		// echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
@@ -261,7 +261,15 @@ class commonAPI
 		}
 		// $avalableWorker["availableWorkers"] = $newWorkerArr;
 		// return $this->common->arrayToJson($avalableWorker);
-		return $newWorkerArr;
+		if($json){
+			$avalableWorker = [];
+			$avalableWorker["availableWorkers"] = $newWorkerArr;
+			return $this->common->arrayToJson($avalableWorker);
+		}
+		else{
+			return $newWorkerArr;
+		}
+		
 	}
 	function allSupervisorDetails(){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
