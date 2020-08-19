@@ -584,8 +584,8 @@ class REQUESTS
 		}	
 		else{
 			$userID = $postArr["userId"];
-			//$addCond = "and (baseSupervsor = $userID or addSupervsor like '%$userID%')";
-			$addCond = "and (baseSupervsor = $userID)";
+			$addCond = "and (baseSupervsor = $userID or addSupervsor like '%$userID%')";
+			//$addCond = "and (baseSupervsor = $userID)";
 			if($postArr["userType"] == 1){
 				$addCond= "";
 			}
@@ -639,7 +639,8 @@ class REQUESTS
 		$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		if($postArr["userType"]!=1){
 		    $user_id=$postArr["userId"];
-		    $add_condition=" and baseSupervsor=".$user_id;
+			$addCond = "and (baseSupervsor = $user_id or addSupervsor like '%$user_id%')";
+		    //$add_condition=" and baseSupervsor=".$user_id;
 		}
 		else
 		    $add_condition='';
@@ -922,6 +923,56 @@ class REQUESTS
         return $this->common->arrayToJson($returnval);
 	}
 	
+	function deleteSubmittedworkarrangement($postArr){
+	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$dbm = new DB;
+		$finalList = array();
+        $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        $worklistingId = $postArr["deleteWorkArrangementIds"];
+		$noAttWorkListingId = array();
+		$attWorkListingId = array();
+        if(!empty($worklistingId))
+        {
+			//$worklistingIdArray=explode(',',$worklistingId);
+		
+			foreach($worklistingId as $key=>$value){
+				$whereClause1 = "workArrangementId=".$value;
+				$selectFileds1 = array("workerId");
+				$res2=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds1,$whereClause1);				
+				if($res2[1] > 0){					
+					array_push($attWorkListingId,	$value);
+				}else{	
+				    array_push($noAttWorkListingId,	$value);
+				}	     
+				
+			}
+			if(!empty($noAttWorkListingId))
+			{
+				$worklistingId=implode(',',$noAttWorkListingId);
+				$whereClause = "workArrangementId IN (".$worklistingId.") and status=2";
+				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$whereClause);
+				$whereClause = "workArrangementId IN (".$worklistingId.") and draftStatus=1";
+				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
+				$finalList["attWorkListingId"]=$attWorkListingId;
+				$finalList["response"] ="success";
+				$finalList["responsecode"] =1;
+				
+			}else{
+				$finalList["attWorkListingId"]=$attWorkListingId;
+				$finalList["noAttWorkListingId"]=$noAttWorkListingId ;
+				$finalList["response"] ="Failure";
+				$finalList["responsecode"] = 2;
+			}
+				
+        }
+        else
+        {
+			$finalList["attWorkListingId"]=$attWorkListingId;
+            $finalList["response"] ="Failure";
+    		$finalList["responsecode"] = 2;
+        }
+        return $this->common->arrayToJson($finalList);
+	}
 }
 
 ?>
