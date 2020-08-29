@@ -294,7 +294,10 @@ class WORKREQUESTS
                 $addCond.=" and projectId=".$projectid;
             if(!empty($clientid))
                 $addCond.=" and clientId=".$clientid;
-            
+            if($postArr['userType'] != 1)
+			{
+				$addCond.=" and createdBy=".$postArr['userId'];
+			}
             $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
             $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location");
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
