@@ -36,19 +36,40 @@ class commonAPI
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		
-		$selectFileds=array("projectId","projectName","startTime","endTime");		
-		$whereClause = "projectStatus='1'";	
-		
-		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
-		
 		$projectArr = array();
-		if($res[1] > 0){
-			$projectArr = $db->fetchArray($res[0], 1);          	
-			
-		}
-		else{
-			$projectArr = array(); 
+		$projectIdList  = array();
+		$projectList = array();
+		if($obj['userType'] == 1)
+		{
+			$selectFileds=array("projectId","projectName","startTime","endTime");
+			$whereClause = "projectStatus='1'";
+			$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
+			if($res[1] > 0){
+				$projectArr = $db->fetchArray($res[0], 1);          					
+			}
+		}else
+		{
+			$whereClause="userId=".$obj['userId'];
+			$selectFileds=array("userId","Name","userType","userName","project");
+			$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
+			if($res[1] > 0){
+				$projectIdList = $db->fetchArray($res[0], 1); 
+                 foreach($projectIdList as $key=>$det)
+				 {
+					$projectList=$det["project"];
+				 }	
+				//$projectList=explode(",",$projectList);
+				//for ($projectList as $projectId)
+				{
+					$selectFileds=array("projectId","projectName","startTime","endTime");
+					$whereClause = "projectStatus='1' and projectId IN(".$projectList.")";
+					$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
+					if($res[1] > 0){
+						$projectArr = $db->fetchArray($res[0], 1);          					
+					}
+				}
+			  }
+			// $projectArr["workArrangementProj"]="test";
 		}
  
 		return $projectArr;
@@ -788,7 +809,8 @@ class commonAPI
     						$length=intval($item["length"]);
     						$width=intval($item["width"]);
     						$height=intval($item["height"]);
-    						$settotal=$length*$width*$height;
+							$setcount=intval($item["setcount"]);
+    						$settotal=$length*$width*$height*$setcount;
     						$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item["id"], "itemName"=>$item["ItemUniqueId"],"type"=>"1","desc"=>$desc,"requestBy"=>$works["requestedBy"],
     						                                                "totalset"=>$settotal,"workdonetotal"=>$workdonetotal);
     						// $itemDesc = $this->getContractsDesc($item["itemId"]);

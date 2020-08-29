@@ -639,7 +639,7 @@ class REQUESTS
 		$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		if($postArr["userType"]!=1){
 		    $user_id=$postArr["userId"];
-			$addCond = "and (baseSupervsor = $user_id or addSupervsor like '%$user_id%')";
+			$add_condition = "and (baseSupervsor = $user_id or addSupervsor like '%$user_id%')";
 		    //$add_condition=" and baseSupervsor=".$user_id;
 		}
 		else
@@ -666,7 +666,8 @@ class REQUESTS
 			    $selectFileds2=array("workArrangementId","workerId","inTime","outTime","workerTeam", "reason", "status","statusOut","isSupervisor");
                 $whereClause2 ="workArrangementId= ".$work_id." order by workerTeam";
                 $res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
-                
+                $supervisor_list=array();
+				$workeridFinal=array();
                 if($res2[1] > 0){
                     $workerids = $db->fetchArray($res2[0],1);
                     foreach($workerids as $ids){
@@ -913,12 +914,12 @@ class REQUESTS
             $deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
             
             $returnval["response"] ="success";
-    		$returnval["responsecode"] = 1;
+    		$returnval["responsecode"] = 2;
         }
         else
         {
             $returnval["response"] ="Failure";
-    		$returnval["responsecode"] = 2;
+    		$returnval["responsecode"] = 3;
         }
         return $this->common->arrayToJson($returnval);
 	}
@@ -931,6 +932,8 @@ class REQUESTS
         $worklistingId = $postArr["deleteWorkArrangementIds"];
 		$noAttWorkListingId = array();
 		$attWorkListingId = array();
+		$workArProjectIds = array();
+		$attWorkListingNameMsg = array();
         if(!empty($worklistingId))
         {
 			//$worklistingIdArray=explode(',',$worklistingId);
@@ -949,27 +952,61 @@ class REQUESTS
 			if(!empty($noAttWorkListingId))
 			{
 				$worklistingId=implode(',',$noAttWorkListingId);
-				$whereClause = "workArrangementId IN (".$worklistingId.") and status=2";
+				$whereClause = "workArrangementId IN (".$worklistingId.") and status=1";
 				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$whereClause);
 				$whereClause = "workArrangementId IN (".$worklistingId.") and draftStatus=1";
 				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
-				$finalList["attWorkListingId"]=$attWorkListingId;
 				$finalList["response"] ="success";
 				$finalList["responsecode"] =1;
 				
-			}else{
+			}
+			if(!empty($attWorkListingId))
+			{
+				//$workArrIds = implode(",", $attWorkListingId);
+				foreach ($attWorkListingId as $workArId)
+				{
+					$whereClause2 = "workArrangementId =".$workArId;
+					$selectFileds2 = array("projectId");
+					$res3=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds2,$whereClause2);	
+					if($res3[1] > 0)
+					{
+						$workArProjectIds = $dbm->fetchArray($res3[0],1); 
+					}
+					//$finalList["workArProjectIds"]=$workArProjectIds;
+					foreach ($workArProjectIds as $projectIdVal)
+					{
+						$whereClause4 = "projectId =".$projectIdVal["projectId"];
+						$selectFileds4 = array("projectName");
+						$res4=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds4,$whereClause4);
+						if($res4[1] > 0)
+						{		
+							 $projectNameVals = $dbm->fetchArray($res4[0],1);
+							 foreach ($projectNameVals as $projectNameVal)
+							 {
+							   array_push($attWorkListingNameMsg,$projectNameVal["projectName"]." Not deleted due to valid attandance entry");	
+							 }
+						}
+					}
+				}
+				$finalList["attWorkListingId"]=$attWorkListingId;
+				$finalList["attWorkListingNameMsg"]=$attWorkListingNameMsg;
+				$finalList["response"] ="success";
+				$finalList["responsecode"] =2;
+			}
+			/*else{
 				$finalList["attWorkListingId"]=$attWorkListingId;
 				$finalList["noAttWorkListingId"]=$noAttWorkListingId ;
 				$finalList["response"] ="Failure";
 				$finalList["responsecode"] = 2;
 			}
+			*/
 				
         }
         else
         {
 			$finalList["attWorkListingId"]=$attWorkListingId;
             $finalList["response"] ="Failure";
-    		$finalList["responsecode"] = 2;
+    		$finalList["responsecode"] = 3;
         }
         return $this->common->arrayToJson($finalList);
 	}
