@@ -382,7 +382,7 @@ class WORKREQUESTS
                                             $itemList_in = $db->fetchArray($resitem_in[0]);
                                             $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
                                         }
-                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH";
+                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH"." x ".$sizeDet['setcount'];
                                         $a++;
                                     }
                                 }
@@ -803,7 +803,7 @@ class WORKREQUESTS
                         else{
                             $cstatus="Full Size";
                         }
-                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - ".$cstatus;
+                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - "." X ".$item["setcount"].$cstatus;
                         $usersArr[$key]["requestItems"][$k] = $item;
                         $k++;
                     }
