@@ -824,12 +824,12 @@ class commonAPI
 				}
 				$res3=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$selectFileds2,$whereClause2);
 
-				if($res2[1] > 0){
-					$items2 = $db->fetchArray($res2[0], 1);
+				if($res3[1] > 0){
+					$items2 = $db->fetchArray($res3[0], 1);
 					
 					foreach($items2 as $item2){
 						
-						$resultArrr["items"][$works["workRequestId"]] = array("itemId"=>$item2["id"], "itemName"=>$item2["ItemUniqueId"], "type"=>"2");
+						$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item2["id"], "itemName"=>$item2["ItemUniqueId"], "type"=>"2");
 						
 					}
 
