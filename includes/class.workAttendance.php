@@ -18,7 +18,7 @@ class REQUESTS
 		$requestType = $postArr["requestType"];
 		$userID = $postArr["userId"];
 		$userType = $postArr["userType"];
-		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks");
+		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks","createdBy");
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			if($userType == 1){
 				$addCond = "createdOn='".$postArr["startDate"]."'";
@@ -76,6 +76,14 @@ class REQUESTS
 					$results[$key]["workers"] = $workeridFinal;
 					$results[$key]["isNew"] = true;
 					$results[$key]["workersteamlist"] = $workeridteams;
+
+					$selectFiledsitem=array("userName");
+                    $whereClauseitem = "userId=".$det['createdBy'];
+                    $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
+                    if($resitem[1] > 0){
+                        $itemList = $db->fetchArray($resitem[0]);
+                        $results[$key]["createdByName"]=$itemList['userName'];
+                    }
 				}    
 			}      	
 	
@@ -133,7 +141,14 @@ class REQUESTS
     					$results[$count_submit]["isNew"] = false;
     					$results[$count_submit]["workersteamlist"] = $workeridteams;
     					$count_submit++;
-    				}    
+					}    
+					$selectFiledsitem=array("userName");
+                    $whereClauseitem = "userId=".$det['createdBy'];
+                    $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
+                    if($resitem[1] > 0){
+                        $itemList = $db->fetchArray($resitem[0]);
+                        $results[$key]["createdByName"]=$itemList['userName'];
+                    }
     			}      	
     		}
 	    }
@@ -797,7 +812,7 @@ class REQUESTS
 			$insertArr["baseSupervsor"]=trim($postArr["value_supervisors"]);
 			//$insertArr["addSupervsor"]=trim($postArr["value_supervisors2"]);
 			$insertArr["addSupervsor"]=$addSupervsor;
-			$insertArr["createdBy"]=trim($postArr["userId"]);
+			$insertArr["createdBy"]=trim($postArr["userId"][0]);
 			$insertArr["createdOn"]=trim($postArr["startDate"]);
 			$insertArr["remarks"]=trim($postArr["remarks"]);
 			$insertArr["status"]=trim($postArr["status"]);		
