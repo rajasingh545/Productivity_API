@@ -957,7 +957,7 @@ class REQUESTS
 				$whereClause = "workArrangementId IN (".$worklistingId.") and draftStatus=2";
 				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
 				$finalList["response"] ="success";
-				$finalList["responsecode"] =1;
+				$finalList["responsecode"] =2;
 				
 			}
 			if(!empty($attWorkListingId))
