@@ -51,6 +51,10 @@ if($_POST["requestCode"] == 20){
     $response = $requestObj->imageUploads($_POST);
 }
 
+if($obj["requestCode"] == 30){
+    $response = $requestObj->getWorkRequestLWHSCalulatedValue($obj);
+}
+
 echo $response;
 
  ?>

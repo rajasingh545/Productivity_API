@@ -214,6 +214,7 @@ class WORKREQUESTS
                         $insertSizeArr["setcount"] = $sizeList["set"];
                         $insertSizeArr["ItemUniqueId"]=$wrUniqueId;
                         $insertSizeArr["createdOn"] = date("Y-m-d H:i:s");
+                        $insertSizeArr["contractId"] = $itemList["value_item"];
                        
                         $insid3 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$insertSizeArr,1,2);
                        
@@ -1154,6 +1155,30 @@ class WORKREQUESTS
 		    $returnval["responsecode"] = 0;
             return $this->common->arrayToJson($returnval);
         }
+    }
+
+    function getWorkRequestLWHSCalulatedValue($postArr){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+        $dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        
+        $selectFiledsSize=array("length","height","width","setcount");
+       $whereClause = "contractId=".$postArr["contractId"];
+        $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$selectFiledsSize,$whereClause);
+        if($res[1] > 0){
+            $sizeList = $db->fetchArray($res[0],1);
+            $total=0;
+            foreach($sizeList as $size){
+                $total = $total + ($size["length"]*$size["height"]*$size["width"]*$size["setcount"]);
+                
+            }
+        }
+        $result["total"] = $total;
+
+        return $this->common->arrayToJson($result);
+		
     }
 }
 
