@@ -801,7 +801,8 @@ class commonAPI
                                     $length=intval($item4value["length"]);
                                     $width=intval($item4value["width"]);
                                     $height=intval($item4value["height"]);
-                                    $workdonetotal=$workdonetotal+($length*$width*$height);
+									$setcount=intval($item4value["setcount"]);
+                                    $workdonetotal=$workdonetotal+($length*$width*$height*$setcount);
                                 }
                             }
     					    

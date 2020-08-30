@@ -939,10 +939,10 @@ class REQUESTS
 			//$worklistingIdArray=explode(',',$worklistingId);
 		
 			foreach($worklistingId as $key=>$value){
-				$whereClause1 = "workArrangementId=".$value;
+				$whereClause1 = "workArrangementId=".$value." and draftStatus=2";
 				$selectFileds1 = array("workerId");
 				$res2=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds1,$whereClause1);				
-				if($res2[1] > 0){					
+				if($res2[1] > 0){	
 					array_push($attWorkListingId,	$value);
 				}else{	
 				    array_push($noAttWorkListingId,	$value);
@@ -952,9 +952,9 @@ class REQUESTS
 			if(!empty($noAttWorkListingId))
 			{
 				$worklistingId=implode(',',$noAttWorkListingId);
-				$whereClause = "workArrangementId IN (".$worklistingId.") and status=1";
+				$whereClause = "workArrangementId IN (".$worklistingId.")";
 				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$whereClause);
-				$whereClause = "workArrangementId IN (".$worklistingId.") and draftStatus=1";
+				$whereClause = "workArrangementId IN (".$worklistingId.") and draftStatus=2";
 				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
 				$finalList["response"] ="success";
 				$finalList["responsecode"] =1;
