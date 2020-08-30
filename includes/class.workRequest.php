@@ -1081,9 +1081,6 @@ class WORKREQUESTS
                 $insertArr=array();
                 $uploadimg=implode(",",$upload_url_temp);
                 global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-                $db = new DB;
-                $dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-
                 $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
 
                 $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET completionImages='".$uploadimg."' WHERE workRequestId=".$wrequestid;
