@@ -300,7 +300,7 @@ class WORKREQUESTS
 				$addCond.=" and createdBy=".$postArr['userId'];
 			}
             $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
-            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location");
+            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","createdBy","createdOn");
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
     		if($res[1] > 0){
     			$usersArr = $db->fetchArray($res[0], 1);
@@ -324,6 +324,16 @@ class WORKREQUESTS
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["projectname"]=$itemList['projectName'];
                     }
+                    /** */
+                    $createdbyid=$value['createdBy'];
+                    $selectFiledsitem=array("userName");
+                    $whereClauseitem = "userId=".$createdbyid;
+                    $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
+                    if($resitem[1] > 0){
+                        $itemList = $db->fetchArray($resitem[0]);
+                        $usersArr[$key]["createdByName"]=$itemList['userName'];
+                    }
+                    /** */
                     $client_id=$value['clientId'];
     			    $selectFiledsitem=array("clientName");
                     $whereClauseitem = "clientId=".$client_id;
@@ -383,7 +393,7 @@ class WORKREQUESTS
                                             $itemList_in = $db->fetchArray($resitem_in[0]);
                                             $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
                                         }
-                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH"." x ".$sizeDet['setcount'];
+                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH";
                                         $a++;
                                     }
                                 }

@@ -386,10 +386,10 @@ class commonAPI
 
 		$selectFileds=array("userId","Name");
 		if(count($assignedWorkers) > 0){
-		    $whereClause = "project like '%$pid%' and userStatus=1 and userId NOT IN(".implode(",",$assignedWorkers).")";
+		    $whereClause = "project like '%$pid%' and userStatus=1 and homeLeave !=2 and userId NOT IN(".implode(",",$assignedWorkers).")";
 		}
 		else{
-			$whereClause = "project like '%$pid%' and userStatus=1 ";
+			$whereClause = "project like '%$pid%' and homeLeave !=2 and userStatus=1 ";
 		}
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
 		
@@ -802,7 +802,7 @@ class commonAPI
                                     $width=intval($item4value["width"]);
                                     $height=intval($item4value["height"]);
 									$setcount=intval($item4value["setcount"]);
-                                    $workdonetotal=$workdonetotal+($length*$width*$height*$setcount);
+                                    $workdonetotal=$workdonetotal+($length*$width*$height);
                                 }
                             }
     					    
