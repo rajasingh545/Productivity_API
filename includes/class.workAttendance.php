@@ -592,6 +592,8 @@ class REQUESTS
 	function getProjectAttendance($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
+		
+
 		$selectFileds=array("workArrangementId","attendanceRemark");
 		$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		if($postArr["requestType"] == 1){ // if edit
@@ -627,12 +629,20 @@ class REQUESTS
 			// 	$whereClause2 ="workArrangementId= ".$details["workArrangementId"]." order by workerTeam";
 			// }
 
-			
+			$assignedWorkers = $this->getAssignedPartialWorker($details["workArrangementId"]);
+
+		
 			$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
 
 			if($res2[1] > 0){
 				$workerids = $db->fetchArray($res2[0],1);
 				foreach($workerids as $ids){
+					if(in_array($ids["workerId"], $assignedWorkers)){
+						$ids["assignedWorker"] = 1;
+					}
+					else{
+						$ids["assignedWorker"] = 0;
+					}
 				    $ids["remarks"] = $details["attendanceRemark"];
 					if($ids['isSupervisor'])
     					$supervisor_list[] = $ids;
@@ -645,6 +655,27 @@ class REQUESTS
 		    $final_list["workerlist"]=$workeridFinal;	
 		}
 		return $this->common->arrayToJson($final_list);	
+
+	}
+
+	function getAssignedPartialWorker($workArrangementID){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+
+		$selectFileds = array("workerId");
+		$whereClause = "workArrangementId != $workArrangementID AND dateWithOutTime != '0000-00-00 00:00:00' AND dateWithOutTime > '".date("Y-m-d h:i:s")."' AND partial=1";
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds,$whereClause);
+		$finalWorkers = [];
+		if($res[1] > 0){
+			$workers = $db->fetchArray($res[0], 1); 
+
+			foreach($workers as $worker){
+				$finalWorkers[] = $worker["workerId"];
+			}
+		}
+
+		return $finalWorkers;
 
 	}
 	function getSubmittedAttendanceList($postArr){
@@ -734,8 +765,13 @@ class REQUESTS
 				if($val["IN"] != "")
 					$updateArr["inTime"] = $val["IN"];
 
-				if($val["OUT"] != "")
+				if($val["OUT"] != ""){
 					$updateArr["outTime"] = $val["OUT"];
+					$updateArr["dateWithOutTime"] = date("Y-m-d")." ".$val["OUT"];
+				}
+				else{
+					$updateArr["dateWithOutTime"] = date("Y-m-d")." 22:00:00";
+				}
 
 				if($val["reason"] != "")
 					$updateArr["reason"] = $val["reason"];
