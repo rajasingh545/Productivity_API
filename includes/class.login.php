@@ -18,7 +18,7 @@ class LOGIN
 		$selectFileds=array("userId","userType","Name","project");
 		$whereClause = "username='$username' AND password='".md5($password)."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
-		
+
 		$userArr = array();
 		if($res[1] > 0){
 			$userInfo = $db->fetchArray($res[0]);

@@ -440,9 +440,10 @@ class WORKREQUESTS
 		$requestArr = array();
 		if($res[1] > 0){
             $requestArr["requestDetails"] = $db->fetchArray($res[0]);
+            $requestArr["requestDetails"]["basePath"] = BASEPATH;
             if(!empty($requestArr["requestDetails"]['drawingImage']))
             {
-                $tempimgname=BASEPATH.$requestArr["requestDetails"]['drawingImage'];
+               $tempimgname=BASEPATH.$requestArr["requestDetails"]['drawingImage'];
                 $requestArr["requestDetails"]['drawingImage'] = $tempimgname;
             }
             else{
@@ -617,6 +618,9 @@ class WORKREQUESTS
             $insertArr["photo_1"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_1");
             $insertArr["photo_2"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_2");
             $insertArr["photo_3"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_3");
+            $insertArr["photo_4"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_4");
+            $insertArr["photo_5"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_5");
+            $insertArr["photo_6"]=$this->fileGetContents(trim($postArr["uniqueId"]),"photo_6");
             //$insertArr["supervisor"]=trim($postArr["value_supervisor"]);
             $fieldsupervisors=$postArr["supervisors"];
             $fieldsuper=array();
@@ -643,10 +647,8 @@ class WORKREQUESTS
 			$dbm = new DB;
             $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
             $whereClause = "worktrackId=".$worktrackId;
-
-
-			
             $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$insertArr, $whereClause);
+            $this->updatePhotos($postArr, $worktrackId, 0, $postArr["uniqueId"], $dbm, $dbcon);
 
             $delete1 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$whereClause);
             $delete2 = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKTEAMS"],$whereClause);
@@ -659,7 +661,7 @@ class WORKREQUESTS
 
                 // insert photos for Others
                 if($postArr["cType"] == 2){
-                   
+                    
                     $this->insertPhotos($postArr, $insid, 0, $postArr["uniqueId"], $dbm, $dbcon);
                 }
                 
@@ -892,6 +894,9 @@ class WORKREQUESTS
             $listArr["photo_1"] = $photosOther["photo_1"];
             $listArr["photo_2"] = $photosOther["photo_2"];
             $listArr["photo_3"] = $photosOther["photo_3"];
+            $listArr["photo_4"] = $photosOther["photo_4"];
+            $listArr["photo_5"] = $photosOther["photo_5"];
+            $listArr["photo_6"] = $photosOther["photo_6"];
            
            
 				$invID = str_pad($listArr["workRequestId"], 4, '0', STR_PAD_LEFT);
@@ -910,6 +915,10 @@ class WORKREQUESTS
                         $item["photo_1"] = $photos["photo_1"];
                         $item["photo_2"] = $photos["photo_2"];
                         $item["photo_3"] = $photos["photo_3"];
+                        $item["photo_4"] = $photos["photo_4"];
+                        $item["photo_5"] = $photos["photo_5"];
+                        $item["photo_6"] = $photos["photo_6"];
+
                         $item["WR_text"] = "WR".str_pad($item["workRequestId"], 4, '0', STR_PAD_LEFT);
                         $requestArr["requestItems"][$k] = $item;
                         $k++;
@@ -950,21 +959,45 @@ class WORKREQUESTS
 
     }
 
+    function updatePhotos($postArr, $dwtrId, $WRSubdivision, $uniqueId, $dbm, $dbcon) {
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+        $whereClause = "DWTRId=$dwtrId and WRSubdivision=$WRSubdivision";
+        
+        if($postArr["photo_1"] != ""){
+            $insertPhotoArr["photo_1"]=$this->fileGetContents(trim($uniqueId),"photo_1");
+        }
+        if($postArr["photo_2"] != ""){
+            $insertPhotoArr["photo_2"]=$this->fileGetContents(trim($uniqueId),"photo_2");
+        }
+        if($postArr["photo_3"] != ""){
+            $insertPhotoArr["photo_3"]=$this->fileGetContents(trim($uniqueId),"photo_3");
+        }
+        if($postArr["photo_4"] != ""){
+            $insertPhotoArr["photo_4"]=$this->fileGetContents(trim($uniqueId),"photo_4");
+        }
+        if($postArr["photo_5"] != ""){
+            $insertPhotoArr["photo_5"]=$this->fileGetContents(trim($uniqueId),"photo_5");
+        }
+        if($postArr["photo_6"] != ""){
+            $insertPhotoArr["photo_6"]=$this->fileGetContents(trim($uniqueId),"photo_6");
+        }
+        $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DWTRPHOTOS"],$insertPhotoArr,$whereClause);
+    }
+
     function insertPhotos($postArr, $dwtrId, $WRSubdivision, $uniqueId, $dbm, $dbcon) {
 
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-        if($postArr["photo_1"] != "" || $postArr["photo_2"] != "" || $postArr["photo_3"] != ""){
+        if($postArr["photo_1"] != "" || $postArr["photo_2"] != "" || $postArr["photo_3"] != "" || $postArr["photo_4"] != "" || $postArr["photo_5"] != "" || $postArr["photo_6"] != ""){
             $insertPhotoArr["DWTRId"] = $dwtrId;
             $insertPhotoArr["WRSubdivision"] = $WRSubdivision;
             $insertPhotoArr["photo_1"]=$this->fileGetContents(trim($uniqueId),"photo_1");
             $insertPhotoArr["photo_2"]=$this->fileGetContents(trim($uniqueId),"photo_2");
             $insertPhotoArr["photo_3"]=$this->fileGetContents(trim($uniqueId),"photo_3");
-    
+            $insertPhotoArr["photo_4"]=$this->fileGetContents(trim($uniqueId),"photo_4");
+            $insertPhotoArr["photo_5"]=$this->fileGetContents(trim($uniqueId),"photo_5");
+            $insertPhotoArr["photo_6"]=$this->fileGetContents(trim($uniqueId),"photo_6");
             $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DWTRPHOTOS"],$insertPhotoArr,1,2);
         }
-
-       
-
     }
 
     function getDWTRPhotos($DWTRId, $subDevisionId){
@@ -974,7 +1007,7 @@ class WORKREQUESTS
 		$db = new DB;
         $dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
         
-        $selectFiledsMan=array("photo_1","photo_2","photo_3");
+        $selectFiledsMan=array("photo_1","photo_2","photo_3","photo_4","photo_5","photo_6");
        $whereClauseMan = "DWTRId=$DWTRId and WRSubdivision=$subDevisionId";
         $resMan=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DWTRPHOTOS"],$selectFiledsMan,$whereClauseMan);
         $photos = $db->fetchArray($resMan[0]);
@@ -1026,6 +1059,38 @@ class WORKREQUESTS
          }
          return $this->common->arrayToJson($returnval);
     }
+
+
+    function unlink_imageUploads($postArr){
+            global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+            $dbm = new DB;
+
+            $imageName = $postArr['imagefor'];
+            $DWTRId = $postArr['dwtrId'];
+            $subDevisionId = "0";
+            $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+            $whereClause = "DWTRId=$DWTRId and WRSubdivision=$subDevisionId";
+            $selectFiledsSize=array($imageName);
+            $resSize=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DWTRPHOTOS"],$selectFiledsSize,$whereClause);
+            if($resSize[1] > 0){
+                $workList = $dbm->fetchArray($resSize[0]);
+                if($workList[$imageName])
+                {
+                   $insertArr[$imageName]="";
+                   $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DWTRPHOTOS"],$insertArr,$whereClause);
+                   if(unlink($workList[$imageName])){
+                    $returnval["response"] ="success";
+                    $returnval["responsecode"] = 1; 
+                }else{
+                    $returnval["response"] ="error";
+                    $returnval["responsecode"] = 0; 
+                }
+                }
+            }
+            $dbm->dbClose();
+            return $this->common->arrayToJson($returnval);
+     }
+
 	function completeimageuploads($postArr){
 	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
