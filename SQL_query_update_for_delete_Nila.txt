@@ -1,0 +1,8 @@
+ALTER TABLE `p_dailyworktrack` ADD `photo_4` VARCHAR( 100 ) NOT NULL AFTER `photo_3` ,
+ADD `photo_5` VARCHAR( 100 ) NOT NULL AFTER `photo_4` ,
+ADD `photo_6` VARCHAR( 100 ) NOT NULL AFTER `photo_5` ;
+
+ALTER TABLE `p_dwtrphotos` ADD `photo_4` VARCHAR( 100 ) NOT NULL AFTER `photo_3` ,
+ADD `photo_5` VARCHAR( 100 ) NOT NULL AFTER `photo_4` ,
+ADD `photo_6` VARCHAR( 100 ) NOT NULL AFTER `photo_5` ;
+        
