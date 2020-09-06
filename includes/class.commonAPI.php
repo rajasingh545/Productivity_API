@@ -12,7 +12,7 @@ class commonAPI
 
 	function commonAPIs($obj){
 		
-        $allDetails = array();
+       $allDetails = array();
 		$allDetails["projects"] = $this->projectDetails($obj);
 		$allDetails["workers"] = $this->workerDetails();
 		$allDetails["team"] = $this->teamDetails($obj);
@@ -31,6 +31,7 @@ class commonAPI
 		// $allDetails["requestDetails"] = $this->requestDetails();
         
 		return $this->common->arrayToJson($allDetails);
+		
 	}
     function projectDetails($obj){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
@@ -366,10 +367,10 @@ class commonAPI
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime='00:00:00'))";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime='00:00:00'))";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		}
 		//echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
@@ -383,10 +384,10 @@ class commonAPI
 		else{
 			$assignedWorkers =array();
 		}
-
+		$vehiclesArr['assignedWorkers']=$assignedWorkers;
 		$selectFileds=array("userId","Name");
 		if(count($assignedWorkers) > 0){
-		    $whereClause = "project like '%$pid%' and userStatus=1 and homeLeave !=2 and userId NOT IN(".implode(",",$assignedWorkers).")";
+			$whereClause = "project like '%$pid%' and userStatus=1 and homeLeave !=2 and userId NOT IN(".implode(",",$assignedWorkers).")";			
 		}
 		else{
 			$whereClause = "project like '%$pid%' and homeLeave !=2 and userStatus=1 ";
@@ -402,11 +403,11 @@ class commonAPI
 		}
 		
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00'))";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 			//$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and  isSupervisor=0 and (partial=0 or (partial=1 and outTime='00:00:00'))";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and  isSupervisor=0 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
@@ -719,7 +720,7 @@ class commonAPI
 			$item = $db->fetchArray($res[0]);
 
 			$usersArr["contractsname"] = $item["item"];
-			$usersArr["desc"] = trim($item["description"])." at ".$item["location"].", Size: ".$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH";
+			$usersArr["desc"] = trim($item["description"])." at ".$item["location"].", Size: ".$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH"." X ".$item["setcount"];
 		
 		}
 		else{
@@ -758,8 +759,8 @@ class commonAPI
         		$whereClause_1 = "workRequestId='".$val["workRequestId"]."'";
         		$res_1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTITEMS"],$selectFileds_1,$whereClause_1);
                 if($res_1[1] > 0){
-                    $usersArr_1 = $db->fetchArray($res_1[0]);
-                    if($usersArr_1['workBased']==1)
+					$usersArr_1 = $db->fetchArray($res_1[0]);
+			        if($usersArr_1['workBased']==1)
                     {
                         $resultArrr["workRequests"][$key]["workRequestsizebased"]="yes";
                     }
@@ -820,19 +821,70 @@ class commonAPI
     						// $resultArrr["items"][$works["workRequestId"]]["itemName"] = $itemDesc["contractsname"];
     						// $resultArrr["items"][$works["workRequestId"]]["itemDesc"] = $itemDesc["desc"];
     					}
+					}else{
+
+						foreach($items as $item){
+							/*$workdonetotal=0;
+							$selectFileds4=array("length","height","width","setcount");		
+							$whereClause4 = "workTrackId IN(".$worktrackvalue.") and subDivisionId=".$item["id"];
+							$res4=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$selectFileds4,$whereClause4);
+							if($res4[1] > 0){
+								$items4 = $db->fetchArray($res4[0],1);
+								foreach($items4 as $item4value){
+									$length=intval($item4value["length"]);
+									$width=intval($item4value["width"]);
+									$height=intval($item4value["height"]);
+									$setcount=intval($item4value["setcount"]);
+									$workdonetotal=$workdonetotal+($length*$width*$height);
+								}
+							}*/
+							
+							$desc = "WR: ".$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH"." x ".$item["setcount"];
+							$length=intval($item["length"]);
+							$width=intval($item["width"]);
+							$height=intval($item["height"]);
+							$setcount=intval($item["setcount"]);
+							$settotal=$length*$width*$height*$setcount;
+							$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item["id"], "itemName"=>$item["ItemUniqueId"],"type"=>"1","desc"=>$desc,"requestBy"=>$works["requestedBy"],
+																			"totalset"=>$settotal,"workdonetotal"=>$workdonetotal);
 					}
 
 				}
-				$res3=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$selectFileds2,$whereClause2);
+				/*$res3=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$selectFileds2,$whereClause2);
 
-				if($res2[1] > 0){
-					$items2 = $db->fetchArray($res2[0], 1);
-					
-					foreach($items2 as $item2){
+				if($res3[1] > 0){
+					$items2 = $db->fetchArray($res3[0], 1);
+					$workdonetotal=0;
+					//$worktrackvalue=implode(",",$worktracklist);
+					foreach($items2 as $item){
+						/*$workdonetotal=0;
+						$selectFileds4=array("length","height","width","setcount");		
+						$whereClause4 = "workTrackId IN(".$worktrackvalue.") and subDivisionId=".$item["id"];
+						$res4=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$selectFileds4,$whereClause4);
+						if($res4[1] > 0){
+							$items4 = $db->fetchArray($res4[0],1);
+							foreach($items4 as $item4value){
+								$length=intval($item4value["length"]);
+								$width=intval($item4value["width"]);
+								$height=intval($item4value["height"]);
+								$setcount=intval($item4value["setcount"]);
+								$workdonetotal=$workdonetotal+($length*$width*$height);
+							}
+						}*/
 						
-						$resultArrr["items"][$works["workRequestId"]] = array("itemId"=>$item2["id"], "itemName"=>$item2["ItemUniqueId"], "type"=>"2");
+						/*$desc = "WR: ".$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH"." x ".$item["setcount"];
+						$length=intval($item["length"]);
+						$width=intval($item["width"]);
+						$height=intval($item["height"]);
+						$setcount=intval($item["setcount"]);
+						$settotal=$length*$width*$height*$setcount;
+						$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item["id"], "itemName"=>$item["ItemUniqueId"],"type"=>"1","desc"=>$desc,"requestBy"=>$works["requestedBy"],
+																		"totalset"=>$settotal,"workdonetotal"=>$workdonetotal);
+						/*$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item2["id"], "itemName"=>$item2["ItemUniqueId"], "type"=>"2","desc"=>$desc,"requestBy"=>$works["requestedBy"],
+						"totalset"=>$settotal,"workdonetotal"=>$workdonetotal);
+						*/
 						
-					}
+					/*}*/
 
 				}
 			}

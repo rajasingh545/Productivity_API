@@ -44,7 +44,8 @@ class WORKREQUESTS
                 }
             }
 			
-			$dbm->dbClose();
+            $dbm->dbClose();
+            //createDailyWorkTrack($postArr);
 			if($insid == 0 || $insid == ''){ 
 				$returnval["response"] ="fail";
 				$returnval["responsecode"] = 0; 
@@ -245,7 +246,7 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("workRequestId","projectId","clientId","requestedBy");
+		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","createdBy","createdOn");
 
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			$addCond = "date(createdOn)='".$postArr["startDate"]."'";
@@ -259,7 +260,17 @@ class WORKREQUESTS
 		// pr($db);
 		$usersArr = array();
 		if($res[1] > 0){
-			$usersArr = $db->fetchArray($res[0], 1);
+            $usersArr = $db->fetchArray($res[0], 1);
+            $selectFiledsitem=array("Name");
+				$whereClauseitem = "userId=".$worklist['createdBy'];
+				$resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
+				if($resitem[1] > 0){
+					$itemList = $db->fetchArray($resitem[0]);
+					$usersArr["createdByName"]=$itemList['Name'];
+					
+				}else{
+					$usersArr["createdByName"]="";
+				}
 		}
 		// pr($usersArr);
  
@@ -325,12 +336,12 @@ class WORKREQUESTS
                     }
                     /** */
                     $createdbyid=$value['createdBy'];
-                    $selectFiledsitem=array("userName");
+                    $selectFiledsitem=array("Name");
                     $whereClauseitem = "userId=".$createdbyid;
                     $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
-                        $usersArr[$key]["createdByName"]=$itemList['userName'];
+                        $usersArr[$key]["createdByName"]=$itemList['Name'];
                     }
                     /** */
                     $client_id=$value['clientId'];
@@ -392,7 +403,7 @@ class WORKREQUESTS
                                             $itemList_in = $db->fetchArray($resitem_in[0]);
                                             $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
                                         }
-                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH";
+                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH"." x ".$sizeDet['setcount']." No's";
                                         $a++;
                                     }
                                 }
@@ -569,6 +580,7 @@ class WORKREQUESTS
            $insertArr["createdOn"] = date("Y-m-d H:i:s");	
            $insertArr["status"] = trim($postArr["listingstatus"]);
            $insertArr["uniqueId"] = trim($postArr["uniqueId"]);
+           $insertArr["createdBy"] = trim($postArr["userId"]);
         
 
 			$dbm = new DB;
@@ -775,7 +787,7 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","remarks","workRequestId");
+		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","remarks","workRequestId","createdBy","createdOn");
 
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			$addCond = "date(createdOn)='".$postArr["startDate"]."'";
@@ -792,9 +804,21 @@ class WORKREQUESTS
 			$usersArr = $db->fetchArray($res[0], 1);
 			foreach($usersArr as $key=>$trackvalue)
 			{
-			    $usersArr[$key]["requestItems"]=[];
+               // $usersArr[$key]["createdByName"]=$key;
+              //  $usersArr[$key]["createdByVal"]=$trackvalue[$createdBy];
+                $selectFiledsitem11=array("Name");
+                        $whereClauseitem11 = "userId=".$trackvalue['createdBy'];
+                        $resitem11=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem11,$whereClauseitem11);
+                        if($resitem11[1] > 0){
+                            $itemList11 = $db->fetchArray($resitem11[0]);
+                            $usersArr[$key]["createdByName"] =$itemList11['Name'];
+                            
+                        }else{
+                            $usersArr[$key]["createdByName"]="";
+                        }
+                $usersArr[$key]["requestItems"]=[];
 			    $usersArr[$key]["requestSizeList"]=[];
-			    $usersArr[$key]["requestMatList"]=[];
+                $usersArr[$key]["requestMatList"]=[];                  
 			    $wtrackid=$trackvalue["worktrackId"];
                 $selectFiledsitem=array("id","workRequestId", "subDivisionId","length", "height","width","setcount","status");
                 $whereClauseitem = "worktrackId='".$wtrackid."'";
@@ -813,8 +837,9 @@ class WORKREQUESTS
                         else{
                             $cstatus="Full Size";
                         }
-                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - "." X ".$item["setcount"].$cstatus;
+                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - "." X ".$item["setcount"]." Nos";
                         $usersArr[$key]["requestItems"][$k] = $item;
+                        
                         $k++;
                     }
                 }
