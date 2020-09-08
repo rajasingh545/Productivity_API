@@ -854,6 +854,7 @@ class commonAPI
 
 				if($res3[1] > 0){
 					$items2 = $db->fetchArray($res3[0], 1);
+
 					$workdonetotal=0;
 					//$worktrackvalue=implode(",",$worktracklist);
 					foreach($items2 as $item){
@@ -883,6 +884,12 @@ class commonAPI
 						/*$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item2["id"], "itemName"=>$item2["ItemUniqueId"], "type"=>"2","desc"=>$desc,"requestBy"=>$works["requestedBy"],
 						"totalset"=>$settotal,"workdonetotal"=>$workdonetotal);
 						*/
+
+					
+					foreach($items2 as $item2){
+						
+						$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item2["id"], "itemName"=>$item2["ItemUniqueId"], "type"=>"2");
+
 						
 					/*}*/
 
