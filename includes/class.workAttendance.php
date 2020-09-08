@@ -1001,7 +1001,7 @@ class REQUESTS
 			//$worklistingIdArray=explode(',',$worklistingId);
 		
 			foreach($worklistingId as $key=>$value){
-				$whereClause1 = "workArrangementId=".$value." and draftStatus=2";
+				$whereClause1 = "workArrangementId=".$value." and draftStatus=1 and (inTime <> '00:00:00' or outTime <> '00:00:00' )";
 				$selectFileds1 = array("workerId");
 				$res2=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds1,$whereClause1);				
 				if($res2[1] > 0){	
@@ -1015,9 +1015,13 @@ class REQUESTS
 			{
 				$worklistingId=implode(',',$noAttWorkListingId);
 				$whereClause = "workArrangementId IN (".$worklistingId.")";
-				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$whereClause);
-				$whereClause = "workArrangementId IN (".$worklistingId.") and draftStatus=2";
-				$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
+				//$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$whereClause);
+					$updateArr2["status"] = 3;
+				$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$updateArr2,$whereClause);
+				$whereClause = "workArrangementId IN (".$worklistingId.")";
+				$updateArr2["draftStatus"] = 3;
+				//$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$whereClause);
+				$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$updateArr2,$whereClause);
 				$finalList["response"] ="success";
 				$finalList["responsecode"] =2;
 				

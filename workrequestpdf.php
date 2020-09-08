@@ -157,7 +157,7 @@ class MYPDF extends TCPDF {
                                         $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
                                     }
                                     $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH";
-                                    $sizeslist[]=$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH-".$scaffoldtypename;
+                                    $sizeslist[]=$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH x ".$sizeDet['setcount']." No's -".$scaffoldtypename;
                                     $a++;
                                 }
                                 $usersArr[$key]["scaffoldtypelist"]=$scaffold_name;
@@ -623,24 +623,45 @@ $vertical_alignments = array('T', 'M', 'B');
 /*foreach($completionimage as $imagepath)
     {*/
     //$fitbox = $horizontal_alignments[$i].' ';
-    
+    $divCount =sizeof($completionimage)/6;
+	$modCount=sizeof($completionimage)%6;
+	if(modCount > 0)
+	{
+		$divCount++;
+	}
+	
      $imgdisp='http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$imagepath;
-     
-     for ($i = 0; $i<round(sizeof($completionimage)/2); $i++) {
-        $fitbox = $horizontal_alignments[$i].' ';
+     $l=0;
+     for ($i = 0; $i<$divCount; $i++) {
+    //$html='<p>Print</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
+		 $y=35;
+		 $x = 15;
+		 if($i > 0)
+			$pdf->AddPage();	  
+		 for($k=0;$k < 3;$k++)
+		 {
+			// $html='<p>Print1</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
+       $fitbox = $horizontal_alignments[$k].' ';
         $x = 15;
         for ($j = 0; $j < 2; $j++) {
-            $fitbox[$i] = $vertical_alignments[$j];
+		//	$html='<p>Print2</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
+            $fitbox[$k] = $vertical_alignments[$j];
             //$pdf->Rect($x, $y, $w, $h, 'F', array(), array(128,255,255));
             //$pdf->Image('http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$completionimage[$k], $x, $y, 90, 90, 'JPG', '', '', true, 300, '', false, false, 1, '', false, false);
-            $pdf->Image($completionimage[$k], $x, $y, 70, 70, 'JPG', 'http://'.$_SERVER['HTTP_HOST'].'/productivity-api/', '', true, 250, '', false, false, 1, false, false, false);
+            $pdf->Image($completionimage[$l], $x, $y, 70, 70, 'JPG', 'http://'.$_SERVER['HTTP_HOST'].'/productivity-api/', '', true, 250, '', false, false, 1, false, false, false);
                                                               
             $x += 100; // new column
-            $k++;
+            $l++;
         }
         $y += 82;
     }
+	 }
     }
+	//$html='<p>'.$divCount.'</p><p>--'.$modCount.'</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
    // }
 //$pdf->Image($drawingimage, '', '', 40, 40, '', '', '', false, 300, '', false, false, 1, false, false, false);
 

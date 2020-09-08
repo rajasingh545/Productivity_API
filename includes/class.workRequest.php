@@ -327,12 +327,13 @@ class WORKREQUESTS
     			        $usersArr[$key]["scaffoldregister"]="No";
     			    $usersArr[$key]["remarks"]=$value['remarks'];
     			    $projectid=$value['projectId'];
-    			    $selectFiledsitem=array("projectName");
+    			    $selectFiledsitem=array("projectName","projectCode");
                     $whereClauseitem = "projectId=".$projectid;
                     $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFiledsitem,$whereClauseitem);
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["projectname"]=$itemList['projectName'];
+						$usersArr[$key]["projectcode"]=$itemList['projectCode'];
                     }
                     /** */
                     $createdbyid=$value['createdBy'];
@@ -345,12 +346,13 @@ class WORKREQUESTS
                     }
                     /** */
                     $client_id=$value['clientId'];
-    			    $selectFiledsitem=array("clientName");
+    			    $selectFiledsitem=array("clientName","clientCode");
                     $whereClauseitem = "clientId=".$client_id;
                     $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["CLIENTS"],$selectFiledsitem,$whereClauseitem);
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["clientname"]=$itemList['clientName'];
+						 $usersArr[$key]["clientcode"]=$itemList['clientCode'];
                     }
                     $usersArr[$key]["location"]=$value['location'];
                     if($value['contractType']==1)
@@ -837,7 +839,7 @@ class WORKREQUESTS
                         else{
                             $cstatus="Full Size";
                         }
-                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - "." X ".$item["setcount"]." Nos";
+                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - "." X ".$item["setcount"]." No's";
                         $usersArr[$key]["requestItems"][$k] = $item;
                         
                         $k++;

@@ -720,7 +720,7 @@ class commonAPI
 			$item = $db->fetchArray($res[0]);
 
 			$usersArr["contractsname"] = $item["item"];
-			$usersArr["desc"] = trim($item["description"])." at ".$item["location"].", Size: ".$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH"." X ".$item["setcount"];
+			$usersArr["desc"] = trim($item["description"])." at ".$item["location"].", Size: ".$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH"." x ".$item["setcount"];
 		
 		}
 		else{
