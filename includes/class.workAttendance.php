@@ -18,7 +18,7 @@ class REQUESTS
 		$requestType = $postArr["requestType"];
 		$userID = $postArr["userId"];
 		$userType = $postArr["userType"];
-		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks","createdBy");
+		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks","createdBy","status");
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			if($userType == 1){
 				$addCond = "createdOn='".$postArr["startDate"]."'";
@@ -96,7 +96,7 @@ class REQUESTS
 		$historyArr=array();
 		if($historysts==1)
 		{
-            $whereClause = "status=3 AND $addCond order by workArrangementId desc";		
+            $whereClause = "status=3 OR status= 4 AND $addCond order by workArrangementId desc";		
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
             $projectArr = array();
             $count_submit=count($results);
@@ -135,7 +135,13 @@ class REQUESTS
     					if(!empty($temp))
     					    $det['addSupervsor']=explode(',',$temp);
     					else
-    					    $det['addSupervsor']=[];
+							$det['addSupervsor']=[];
+						if ($det['status'] ==4)
+						{
+							$det['isDeleted']=true;
+						}else{
+							$det['isDeleted']=false;
+						}
     					$results[$count_submit] =  $det;
     					$results[$count_submit]["workers"] = $workeridFinal;
     					$results[$count_submit]["isNew"] = false;
@@ -1016,7 +1022,7 @@ class REQUESTS
 				$worklistingId=implode(',',$noAttWorkListingId);
 				$whereClause = "workArrangementId IN (".$worklistingId.")";
 				//$deleteCount = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$whereClause);
-					$updateArr2["status"] = 3;
+					$updateArr2["status"] = 4;
 				$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$updateArr2,$whereClause);
 				$whereClause = "workArrangementId IN (".$worklistingId.")";
 				$updateArr2["draftStatus"] = 3;

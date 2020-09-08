@@ -291,6 +291,8 @@ class WORKREQUESTS
             $requesttype=$postArr['requestJsonData']['requestData']['id'];
             $projectid=$postArr['requestJsonData']['selectedProjectData']['projectId'];
             $clientid=$postArr['requestJsonData']['selectedClientData']['clientId'];
+            $workRequestCount = 1;      
+
             if(empty($fromdate))
             {
                 $fromdate=date("Y-m-d");
@@ -333,7 +335,7 @@ class WORKREQUESTS
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["projectname"]=$itemList['projectName'];
-						$usersArr[$key]["projectcode"]=$itemList['projectCode'];
+						$usersArr[$key]["projectcode"]=strtoupper($itemList['projectCode']);
                     }
                     /** */
                     $createdbyid=$value['createdBy'];
@@ -352,8 +354,28 @@ class WORKREQUESTS
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["clientname"]=$itemList['clientName'];
-						 $usersArr[$key]["clientcode"]=$itemList['clientCode'];
+						 $usersArr[$key]["clientcode"]=strtoupper($itemList['clientCode']);
                     }
+                    $whereClauseCount = "select count(projectId) as projectCount from p_workrequest where projectId=".$value['projectId']." and clientId=".$value['clientId'];
+                    $connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+                   
+
+                    $workRequestCount = mysqli_query($connectionStr, $whereClauseCount);
+                    $data=mysqli_fetch_assoc($workRequestCount);
+                    $usersArr[$key]['query']=$whereClauseCount;
+                    //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
+                    $str_length = 3; 
+                    $workRequestCount  = substr("000{$data['projectCount']}", -$str_length);
+                    $usersArr[$key]['workReqCount']= $workRequestCount ;
+
+                    //$selectFileds="count(projectId)";
+                   // $workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
+                    //$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+                   // if($workRequestCount > 0){
+                        //$workRequestCount = $db->fetchArray($res[0], 1);
+                     //   $str_length = 3; 
+                     //   $workRequestCount  = substr("000{$workRequestCount}", -$str_length); 
+                   // }
                     $usersArr[$key]["location"]=$value['location'];
                     if($value['contractType']==1)
                         $usersArr[$key]["contracttype"]="Original Contract";
