@@ -19,6 +19,8 @@ include_once $ROOTPATH."/conf/dbinfo.php";
 include_once $ROOTPATH."/conf/vars.php";
 
 define("BASEPATH","http://productivity.vinayak.com.sg/");
+//define("BASEPATH","http://localhost:8081/productivity-api/");
+
 
 //get use sessions
 $commonObj = new COMMON;
