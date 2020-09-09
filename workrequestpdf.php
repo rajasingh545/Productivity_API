@@ -6,7 +6,7 @@ if(isset($_GET["workrequestid"]))
     $workrequstid=$_GET["workrequestid"];
     if(empty($workrequstid))
     {
-        $returnval["code"] = 0;
+        $returnval["code"] = 2;
         $returnval["message"] = "Invalid Work Request";
         echo json_encode($returnval);
         exit;        
@@ -29,7 +29,7 @@ class MYPDF extends TCPDF {
     //Page header
     public function Header() {
         // Logo
-        if ($this->page == 1) {
+        if ($this->page != 2) {
             $image_file = 'TCPDF-master/img/VSS_LH_29062020.jpg';
             $this->Image($image_file, 0, 3, 160, '', 'JPG', '', 'T', false, 300, 'C', false, false, 0, false, false, false);
         }
@@ -53,7 +53,7 @@ class MYPDF extends TCPDF {
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
 		$whereClause = "workRequestId='".$workrequstid."'";
-        $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","drawingAttach","createdOn","createdBy");
+        $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","drawingAttach","createdOn","createdBy","drawingimage","completionImages");
         $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
 		if($res[1] > 0){
 		    $usersArr = $db->fetchArray($res[0], 1);
@@ -74,7 +74,8 @@ class MYPDF extends TCPDF {
 			    $usersArr[$key]["remarks"]=$value['remarks'];
 			    
 			    $usersArr[$key]["createdOn"]=$value['createdOn'];
-			    
+                $usersArr[$key]["drawingimage"]=$value['drawingimage'];
+                $usersArr[$key]["completionImages"]=$value['completionImages'];
 			    $createdBy=$value['createdBy'];
 			    $selectFiledsitem=array("Name");
                 $whereClauseitem = "userId=".$createdBy;
@@ -156,7 +157,7 @@ class MYPDF extends TCPDF {
                                         $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
                                     }
                                     $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH";
-                                    $sizeslist[]=$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH-".$scaffoldtypename;
+                                    $sizeslist[]=$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH x ".$sizeDet['setcount']." No's -".$scaffoldtypename;
                                     $a++;
                                 }
                                 $usersArr[$key]["scaffoldtypelist"]=$scaffold_name;
@@ -198,7 +199,7 @@ $pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8',
 $vari=$pdf->getWorkRequestListDate($workrequstid);
 if(empty($vari))
 {
-    $returnval["code"] = 0;
+    $returnval["code"] = 1;
     $returnval["message"] = "Invalid Work Request";
     echo json_encode($returnval);
     exit;        
@@ -220,6 +221,7 @@ $createdOn="";
 $createdBy="";
 $sizeslist="";
 $sizeslistfinal="";
+$imgdisp="";
 if(!empty($vari))
 {
     $createdOn=$vari[0]['createdOn'];
@@ -230,6 +232,17 @@ if(!empty($vari))
     $location=$vari[0]['location'];
     $description=$vari[0]['description'];
     $drawingAttach=$vari[0]['drawingAttach'];
+    if ($vari[0]['drawingimage'] != '')
+    {
+    $drawingimage="http://".$_SERVER['HTTP_HOST']."/productivity-api/".$vari[0]['drawingimage'];
+    }
+    else{
+        $drawingimage="";
+    }
+    $completionimage = array();
+    $completionimage=explode(",",$vari[0]['completionImages']);
+    //$imgdisp=$completionimage;
+    
     if(!empty($vari[0]['scaffoldtypelist']))
     {
         $scaffoldtypelist=array_unique($vari[0]['scaffoldtypelist']);
@@ -556,14 +569,112 @@ $html = '<br /><br />
 		<td colspan="4"><br /><br /><br /></td>
 	</tr>
 </table>
-';
+<img src="'.$drawingimage.'" />';
+/*$j=1;
+foreach($completionimage as $imagepath)
+    {
+     if(j == 1)
+     {
+        $imgdisp=$imgdisp.'<table><tr>';   
+     }
+     $imgdisp=$imgdisp.'<td><img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$imagepath.'" width="300 px"/></td>';
+     if (j/3 == 0)
+     {
+        $imgdisp=$imgdisp.'</tr><tr>';   
+     }
+     $j++;
+    }
+    $imgdisp=$imgdisp.'</tr></table>';
+*/
+
+
+
 
 // output the HTML content
+//$pdf->writeHTML($html, true, false, true, false, '');
+
+//Close and output PDF document
+//$pdf->Output('workrequestform.pdf', 'I');
+//$pdf->writeHTML($html, true, false, true, false, '');
+//$pdf->Output('workrequestform.pdf', 'I');
+//$pdf->AddPage();
+//$pdf->AddPage('P', 'A4');
+
+//$pdf->Cell(0, 0, 'A4 PORTRAIT', 1, 1, 'C');
+//$pdf->AddPage();
+//$pdf->Cell(0, 10, ''<div>'.$imgdisp.'</div>'', 0, 1, 'L');
 $pdf->writeHTML($html, true, false, true, false, '');
+//$pdf->writeHTML($html, true, false, true, false, '');
+//$pdf->startPageGroup();
+//$html='<div>'.$imgdisp.'</div>';
+if(!empty(completionimage))
+    {
+$pdf->AddPage();
+/** String */
+//$pdf->SetXY(110, 200);
+$x=15;
+$y=35;
+$i=0;
+$w=90;
+$h=90;
+$k=0;
+$horizontal_alignments = array('L', 'C', 'R');
+$vertical_alignments = array('T', 'M', 'B');
+/*foreach($completionimage as $imagepath)
+    {*/
+    //$fitbox = $horizontal_alignments[$i].' ';
+    $divCount =sizeof($completionimage)/6;
+	$modCount=sizeof($completionimage)%6;
+	if(modCount > 0)
+	{
+		$divCount++;
+	}
+	
+     $imgdisp='http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$imagepath;
+     $l=0;
+     for ($i = 0; $i<$divCount; $i++) {
+    //$html='<p>Print</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
+		 $y=35;
+		 $x = 15;
+		 if($i > 0)
+			$pdf->AddPage();	  
+		 for($k=0;$k < 3;$k++)
+		 {
+			// $html='<p>Print1</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
+       $fitbox = $horizontal_alignments[$k].' ';
+        $x = 15;
+        for ($j = 0; $j < 2; $j++) {
+		//	$html='<p>Print2</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
+            $fitbox[$k] = $vertical_alignments[$j];
+            //$pdf->Rect($x, $y, $w, $h, 'F', array(), array(128,255,255));
+            //$pdf->Image('http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$completionimage[$k], $x, $y, 90, 90, 'JPG', '', '', true, 300, '', false, false, 1, '', false, false);
+            $pdf->Image($completionimage[$l], $x, $y, 70, 70, 'JPG', 'http://'.$_SERVER['HTTP_HOST'].'/productivity-api/', '', true, 250, '', false, false, 1, false, false, false);
+                                                              
+            $x += 100; // new column
+            $l++;
+        }
+        $y += 82;
+    }
+	 }
+    }
+	//$html='<p>'.$divCount.'</p><p>--'.$modCount.'</p>';
+	//$pdf->writeHTML($html, true, false, true, false, '');
+   // }
+//$pdf->Image($drawingimage, '', '', 40, 40, '', '', '', false, 300, '', false, false, 1, false, false, false);
+
+
+/** Ending */
+// need $pdf->writeHTML($html, true, false, true, false, '');
+//$pdf->Cell(0, 10, writeHTML($html, true, false, true, false, ''), 0, 1, 'L');
+//$html=$html.$pdf->AddPage().'<div>'.$imgdisp.'</div>';
+//$html=$html.$pdf->AddPage().$pdf->Cell(0, 10, '<div>'.$imgdisp.'</div>', 0, 1, 'L');;
+//$pdf->writeHTML($html, true, false, true, false, '');
 
 //Close and output PDF document
 $pdf->Output('workrequestform.pdf', 'I');
-
 //============================================================+
 // END OF FILE
 //============================================================+
