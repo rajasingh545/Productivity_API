@@ -11,8 +11,16 @@ class WORKREQUESTS
 	}
     function createWorkRequest($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-		
-       
+		    $workRequestCount=1;
+            $whereClauseCount = "select count(projectId) as projectCount from p_workrequest where projectId=".trim($postArr["value_projects"])." and clientId=".trim($postArr["value_clients"]);
+            $connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+            $workRequestCount = mysqli_query($connectionStr, $whereClauseCount);
+            $data=mysqli_fetch_assoc($workRequestCount);
+            //$usersArr[$key]['query']=$whereClauseCount;
+            //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
+            $str_length = 3; 
+            $workRequestCount  = substr("000{$data['projectCount']}", -$str_length);
+            //$usersArr[$key]['workReqCount']= $workRequestCount ;
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["clientId"]=trim($postArr["value_clients"]);
 			$insertArr["status"]=trim($postArr["status"]);
@@ -30,7 +38,7 @@ class WORKREQUESTS
                 $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
             else
                 $insertArr["drawingImage"]='';
-			
+            $insertArr["wrkArrRunningSeqNo"]=$workRequestCount;	
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 			
@@ -64,8 +72,6 @@ class WORKREQUESTS
 
     function updateWorkRequest($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-		
-       
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["clientId"]=trim($postArr["value_clients"]);
 			$insertArr["status"]=trim($postArr["status"]);
@@ -76,9 +82,7 @@ class WORKREQUESTS
             $insertArr["scaffoldRegister"] = trim($postArr["scaffoldRegister"]);
 			$insertArr["createdOn"]=date("Y-m-d H:i:s");
 			$insertArr["createdBy"]=trim($postArr["userId"]);	
-
-			
-			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
+         	$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
 			$insertArr["location"]=trim($postArr["location1"]);
 			
             if($insertArr["drawingAttach"]==1)
@@ -313,7 +317,7 @@ class WORKREQUESTS
 				$addCond.=" and createdBy=".$postArr['userId'];
 			}
             $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
-            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","createdBy","createdOn");
+            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","createdBy","createdOn","wrkArrRunningSeqNo");
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
     		if($res[1] > 0){
     			$usersArr = $db->fetchArray($res[0], 1);
@@ -366,8 +370,10 @@ class WORKREQUESTS
                     $usersArr[$key]['query']=$whereClauseCount;
                     //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
                     $str_length = 3; 
-                    $workRequestCount  = substr("000{$data['projectCount']}", -$str_length);
-                    $usersArr[$key]['workReqCount']= $workRequestCount ;
+                    $workRequestCount  = substr("000{$value['wrkArrRunningSeqNo']}", -$str_length);
+                   // $usersArr[$key]['workReqCount']= $workRequestCount ;
+                   $usersArr[$key]['workReqCount']= $workRequestCount ;
+                   
 
                     //$selectFileds="count(projectId)";
                    // $workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
@@ -1304,6 +1310,75 @@ class WORKREQUESTS
         return $this->common->arrayToJson($result);
 		
     }
+
+    /*  -- new function */
+    
+    function updateWorkRequestSeq(){
+       global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+         $db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        $selectFileds=array("projectId");
+        $whereClause="  1 = 1";
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+		// pr($db);
+        $projectIdArr = array();
+        $clientIdArr = array();
+        $projIdList = array();
+        $clientIdList = array();
+        $projectArrList=array();
+        $workReqArr=array();
+        if($res[1] > 0){
+			$projectIdArr = $db->fetchArray($res[0], 1); 
+			
+			foreach($projectIdArr as $projectId){
+				array_push($projIdList, $projectId["projectId"]);
+			}        	
+		}
+        $selectFileds=array("clientId");
+        //$whereClause="  1 = 1";
+        $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+        if($res[1] > 0){
+			$clientIdArr = $db->fetchArray($res[0], 1); 
+			
+			foreach($clientIdArr as $clientId){
+				array_push($clientIdList, $clientId["clientId"]);
+			}        	
+		}
+        
+        $projIdList=array_unique($projIdList);
+        $clientIdList=array_unique($clientIdList);
+
+        foreach($projIdList as $projectId)
+        {
+           $workRequestCount=1;
+           foreach($clientIdList as $clientId)
+            {
+              $selectFileds=array("workRequestId");
+               $whereClause =  "projectId=".$projectId." and clientId =".$clientId." order by  workRequestId asc" ;
+                $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+
+                if($res[1] > 0){
+                    $workReqArr = $db->fetchArray($res[0], 1);
+                    foreach($workReqArr as $workReqId)
+                    {
+                        $insertArr["wrkArrRunningSeqNo"]=$workRequestCount;
+                        $dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+                        $whereClause1 = "workRequestId=".$workReqId["workRequestId"];
+                        $insid = $db->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$insertArr,$whereClause1);
+                        $workRequestCount++;
+                    }
+                }                                       
+                     
+            }    
+        }
+
+
+
+		return "Running sequence updated successfully";
+    }
+
+    /*  end here */
+
 }
 
 ?>
