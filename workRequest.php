@@ -52,11 +52,17 @@ if($_POST["requestCode"] == 20){
 }
 else if($_POST["requestCode"] == 26){
     $response = $requestObj->unlink_imageUploads($_POST);
+}else if($obj["requestCode"] == 50){
+    $response = $requestObj->updateWorkRequestSeq();
 }
 
 if($obj["requestCode"] == 30){
     $response = $requestObj->getWorkRequestLWHSCalulatedValue($obj);
 }
+/*else{
+    $response = $requestObj->updateWorkRequestSeq();
+}*/
+
 
 echo $response;
 
