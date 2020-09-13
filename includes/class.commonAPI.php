@@ -403,11 +403,11 @@ class commonAPI
 		}
 		
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0 and draftStatus=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 			//$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and  isSupervisor=0 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and  isSupervisor=0 and draftStatus=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
@@ -443,6 +443,7 @@ class commonAPI
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKERS"],$selectFileds,$whereClause);
 		
 		$newWorkerArr = array();
+		
 		if($res[1] > 0){
 			$driverArr = $db->fetchArray($res[0], 1);  
 			foreach($driverArr as $key => $val){
