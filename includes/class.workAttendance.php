@@ -84,7 +84,9 @@ class REQUESTS
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $results[$key]["createdByName"]=$itemList['Name'];
-                    }
+					}else{
+						$results[$key]["createdByName"]="";
+					}					
 				}    
 			}      	
 	
@@ -149,14 +151,15 @@ class REQUESTS
     					$results[$count_submit]["workersteamlist"] = $workeridteams;
 						$count_submit++;
 						$selectFiledsitem=array("userName");
-                    $whereClauseitem = "userId=".$det['createdBy'];
-                    $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
-                    if($resitem[1] > 0){
-                        $itemList = $db->fetchArray($resitem[0]);
-                        $results[$key]["createdByName"]=$itemList['userName'];
-                    }
-					}    
-					
+						$whereClauseitem = "userId=".$det['createdBy'];
+						$resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
+						if($resitem[1] > 0){
+							$itemList = $db->fetchArray($resitem[0]);
+							$results[$key]["createdByName"]=$itemList['userName'];
+						}else{
+							$results[$key]["createdByName"]="";
+						}						
+					}   					
     			}      	
     		}
 		}
@@ -280,7 +283,7 @@ class REQUESTS
 							$getsupervisor= $this->getsupervisorname($temp_sup);
 						 }
 						$temp_ava_sup=array_merge($projectArr["availablesupervisor"],$getsupervisor);
-						if(!empty(temp_ava_sup))
+						if(!empty($temp_ava_sup))
 						$projectArr["availablesupervisor"]=$this->my_array_unique($temp_ava_sup);
 						else{
 							$projectArr["availablesupervisor"]=[];	
