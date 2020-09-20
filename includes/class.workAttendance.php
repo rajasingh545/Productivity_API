@@ -32,12 +32,13 @@ class REQUESTS
 		}
 		else{
 			$addCond = "createdOn='".date("Y-m-d")."'";
-		}		
+		}
+		$results["addcondition"]=$addCond;		
 		if ($requestType == '')
 		{
 			$requestType='2';
 		}
-		$whereClause = "status=".$requestType." AND $addCond order by workArrangementId desc";		
+		$whereClause = "status=".$requestType." AND ".$addCond." order by workArrangementId desc";		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
 		$results = array();
 		$projectArr = array();
@@ -96,7 +97,7 @@ class REQUESTS
 		$historyArr=array();
 		if($historysts==1)
 		{
-            $whereClause = "status=3 OR status= 4 AND $addCond order by workArrangementId desc";		
+            $whereClause = "status=3 OR status= 4 AND ".$addCond." order by workArrangementId desc";		
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
             $projectArr = array();
             $count_submit=count($results);
@@ -146,18 +147,20 @@ class REQUESTS
     					$results[$count_submit]["workers"] = $workeridFinal;
     					$results[$count_submit]["isNew"] = false;
     					$results[$count_submit]["workersteamlist"] = $workeridteams;
-    					$count_submit++;
-					}    
-					$selectFiledsitem=array("userName");
+						$count_submit++;
+						$selectFiledsitem=array("userName");
                     $whereClauseitem = "userId=".$det['createdBy'];
                     $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $results[$key]["createdByName"]=$itemList['userName'];
                     }
+					}    
+					
     			}      	
     		}
-	    }
+		}
+		
 		return $this->common->arrayToJson($results);
 		}
 	function getWorkArrangementDetails($postArr){
