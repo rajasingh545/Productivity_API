@@ -99,7 +99,7 @@ class REQUESTS
 		$historyArr=array();
 		if($historysts==1)
 		{
-            $whereClause = "status=3 OR status= 4 AND ".$addCond." order by workArrangementId desc";		
+            $whereClause = "(status=3 OR status= 4) AND ".$addCond." order by workArrangementId desc";		
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
             $projectArr = array();
             $count_submit=count($results);
@@ -163,7 +163,6 @@ class REQUESTS
     			}      	
     		}
 		}
-		
 		return $this->common->arrayToJson($results);
 		}
 	function getWorkArrangementDetails($postArr){
