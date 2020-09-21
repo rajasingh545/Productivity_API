@@ -32,12 +32,13 @@ class REQUESTS
 		}
 		else{
 			$addCond = "createdOn='".date("Y-m-d")."'";
-		}		
+		}
+		$results["addcondition"]=$addCond;		
 		if ($requestType == '')
 		{
 			$requestType='2';
 		}
-		$whereClause = "status=".$requestType." AND $addCond order by workArrangementId desc";		
+		$whereClause = "status=".$requestType." AND ".$addCond." order by workArrangementId desc";		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
 		$results = array();
 		$projectArr = array();
@@ -98,7 +99,7 @@ class REQUESTS
 		$historyArr=array();
 		if($historysts==1)
 		{
-            $whereClause = "status=3 OR status= 4 AND $addCond order by workArrangementId desc";		
+            $whereClause = "(status=3 OR status= 4) AND ".$addCond." order by workArrangementId desc";		
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
             $projectArr = array();
             $count_submit=count($results);
@@ -161,7 +162,7 @@ class REQUESTS
 					}   					
     			}      	
     		}
-	    }
+		}
 		return $this->common->arrayToJson($results);
 		}
 	function getWorkArrangementDetails($postArr){
@@ -281,7 +282,7 @@ class REQUESTS
 							$getsupervisor= $this->getsupervisorname($temp_sup);
 						 }
 						$temp_ava_sup=array_merge($projectArr["availablesupervisor"],$getsupervisor);
-						if(!empty(temp_ava_sup))
+						if(!empty($temp_ava_sup))
 						$projectArr["availablesupervisor"]=$this->my_array_unique($temp_ava_sup);
 						else{
 							$projectArr["availablesupervisor"]=[];	
