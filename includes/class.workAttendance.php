@@ -150,12 +150,12 @@ class REQUESTS
     					$results[$count_submit]["isNew"] = false;
     					$results[$count_submit]["workersteamlist"] = $workeridteams;
 						$count_submit++;
-						$selectFiledsitem=array("userName");
+						$selectFiledsitem=array("Name");
 						$whereClauseitem = "userId=".$det['createdBy'];
 						$resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
 						if($resitem[1] > 0){
 							$itemList = $db->fetchArray($resitem[0]);
-							$results[$key]["createdByName"]=$itemList['userName'];
+							$results[$key]["createdByName"]=$itemList['Name'];
 						}else{
 							$results[$key]["createdByName"]="";
 						}						
@@ -501,8 +501,9 @@ class REQUESTS
 		
 		$insertArr["createdOn"]=trim($postArr["startDate"]);
 		$insertArr["remarks"]=trim($postArr["remarks"]);
+		$insertArr["createdBy"]=trim($postArr["userId"]);
 		$whereClause = "workArrangementId = ".$work_arr_id." and createdOn='".$for_date."'";
-		$selectFiledsat=array("status","workArrangementId","baseSupervsor","addSupervsor","createdOn");
+		$selectFiledsat=array("status","workArrangementId","baseSupervsor","addSupervsor","createdOn","createdBy");
         $select_work = $dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFiledsat,$whereClause);
         if($select_work[1] > 0){
 			$selectArr = $dbm->fetchArray($select_work[0], 1);
