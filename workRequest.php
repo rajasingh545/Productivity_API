@@ -38,16 +38,20 @@ elseif($obj["requestCode"] === 22){
 }
 elseif($obj["requestCode"] === 23){
     $response = $requestObj->getWorkRequestListDate($obj);
+}else if($obj["requestCode"] === 27){
+    $response = $requestObj->deleteDrawImage($obj);
+}else if($obj["requestCode"] === 28){
+    $response = $requestObj->deleteCompleteImage($obj);
 }
 
 if($_POST["requestCode"] == 24){
-    $response = $requestObj->drawingimageupload($_POST);
+    $response = $requestObj->drawingimageupload_multiple($_POST);
+}else if($_POST["requestCode"] == 52){
+    $response = $requestObj->update_drawing_image_upload($_POST);
 }
 else if($_POST["requestCode"] == 25){
     $response = $requestObj->completeimageuploads($_POST);
-}
-
-if($_POST["requestCode"] == 20){
+}else if($_POST["requestCode"] == 20){
     $response = $requestObj->imageUploads($_POST);
 }
 else if($_POST["requestCode"] == 26){
@@ -55,6 +59,7 @@ else if($_POST["requestCode"] == 26){
 }else if($obj["requestCode"] == 50){
     $response = $requestObj->updateWorkRequestSeq();
 }
+
 
 if($obj["requestCode"] == 30){
     $response = $requestObj->getWorkRequestLWHSCalulatedValue($obj);
@@ -65,5 +70,4 @@ if($obj["requestCode"] == 30){
 
 
 echo $response;
-
  ?>

@@ -6,3 +6,10 @@ ALTER TABLE `p_dwtrphotos` ADD `photo_4` VARCHAR( 100 ) NOT NULL AFTER `photo_3`
 ADD `photo_5` VARCHAR( 100 ) NOT NULL AFTER `photo_4` ,
 ADD `photo_6` VARCHAR( 100 ) NOT NULL AFTER `photo_5` ;
         
+// Sep 22 sql query update //
+
+ALTER TABLE `p_workrequest` CHANGE `drawingImage` `drawingImage` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL ;
+ALTER TABLE `p_workrequest` CHANGE `drawingImage` `drawingImage` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL;
+ALTER TABLE `p_dwtrPhotos` ADD `photo_7` VARCHAR(100) NOT NULL AFTER `photo_6`, ADD `photo_8` VARCHAR(100) NOT NULL AFTER `photo_7`, ADD `photo_9` VARCHAR(100) NOT NULL AFTER `photo_8`, ADD `photo_10` VARCHAR(100) NOT NULL AFTER `photo_9`;
+ALTER TABLE `p_dailyworktrack` ADD `photo_7` VARCHAR(100) NOT NULL AFTER `photo_6`, ADD `photo_8` VARCHAR(100) NOT NULL AFTER `photo_7`, ADD `photo_9` VARCHAR(100) NOT NULL AFTER `photo_8`, ADD `photo_10` VARCHAR(100) NOT NULL AFTER `photo_9`;
+

@@ -34,10 +34,12 @@ class WORKREQUESTS
 			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
 			$insertArr["location"]=trim($postArr["location1"]);	
 
-            if($insertArr["drawingAttach"]==1)
-                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            if($insertArr["drawingAttach"]==1){
+                $drawImage=implode(",",$postArr["drawingImage"]);
+                $insertArr["drawingImage"]=$drawImage;
+            }
             else
-                $insertArr["drawingImage"]='';
+                $insertArr["drawingImage"]=[];
             $insertArr["wrkArrRunningSeqNo"]=$workRequestCount;	
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
@@ -85,10 +87,12 @@ class WORKREQUESTS
          	$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
 			$insertArr["location"]=trim($postArr["location1"]);
 			
-            if($insertArr["drawingAttach"]==1)
-                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            if($insertArr["drawingAttach"]==1){
+                $drawImage=implode(",",$postArr["drawingImage"]);
+                $insertArr["drawingImage"]=$drawImage;
+            }
             else
-                $insertArr["drawingImage"]='';
+                $insertArr["drawingImage"]=[];
 
 			
             $dbm = new DB;
@@ -477,30 +481,33 @@ class WORKREQUESTS
 		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","drawingAttach","drawingImage","completionImages","location");
     	$whereClause = "workRequestId='".$postArr["listingId"]."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
-		// pr($db);
 		$requestArr = array();
 		if($res[1] > 0){
             $requestArr["requestDetails"] = $db->fetchArray($res[0]);
             $requestArr["requestDetails"]["basePath"] = BASEPATH;
             if(!empty($requestArr["requestDetails"]['drawingImage']))
             {
-               $tempimgname=BASEPATH.$requestArr["requestDetails"]['drawingImage'];
-                $requestArr["requestDetails"]['drawingImage'] = $tempimgname;
+                $tempimgsname=explode(",",$requestArr["requestDetails"]['drawingImage']);
+                for($ik=0;$ik<count($tempimgsname);$ik++)
+                {
+                    $tempimgsname[$ik]=$tempimgsname[$ik];
+                }
+                $requestArr["requestDetails"]['drawingImage']=$tempimgsname;
             }
             else{
-                $requestArr["requestDetails"]['drawingImage'] = "";
+                $requestArr["requestDetails"]['drawingImage'] = [];
             }
             if(!empty($requestArr["requestDetails"]['completionImages']))
             {
                 $tempimgsname=explode(",",$requestArr["requestDetails"]['completionImages']);
                 for($ik=0;$ik<count($tempimgsname);$ik++)
                 {
-                    $tempimgsname[$ik]=BASEPATH.$tempimgsname[$ik];
+                    $tempimgsname[$ik]=$tempimgsname[$ik];
                 }
                 $requestArr["requestDetails"]['completionImages']=$tempimgsname;
             }
             else{
-                $requestArr["requestDetails"]['completionImages']="";
+                $requestArr["requestDetails"]['completionImages']=[];
             }
             
             $selectFiledsitem=array("id","workRequestId","itemId","sizeType","previousWR","workBased","contractType");
@@ -1145,6 +1152,105 @@ class WORKREQUESTS
             $dbm->dbClose();
             return $this->common->arrayToJson($returnval);
      }
+     
+     
+     function deleteDrawImage($postArr){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+            $dbm = new DB;
+           /* echo "<pre>";
+            print_r($postArr);
+            echo "</pre>";
+            exit; */
+            $requestCode = $postArr['requestCode'];
+            $workrequestid = $postArr['workrequestid'];
+            $imageID = $postArr['imageId'];
+
+            $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+            $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+            $whereClause = "workRequestId=$workrequestid";
+            $selectFiledsSize=array('drawingImage');
+            $resSize=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFiledsSize,$whereClause);
+            if($resSize[1] > 0){
+                $workList = $dbm->fetchArray($resSize[0]);
+               // $img =explode("images",$imageID);
+                //$sel = "images".$img[1];
+                $data = explode(",",$workList['drawingImage']);
+                $new_array = [];
+                //$send_array = [];
+                foreach($data as $val){
+                    if($val!==$imageID){
+                      array_push($new_array,$val);
+                      //array_push($send_array,BASEPATH.$val);
+                    }
+                }
+                $upload_img = implode(",",$new_array);
+                $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET drawingImage='".$upload_img."' WHERE workRequestId=".$workrequestid;
+                $insid = mysqli_query($connection, $sql);
+                if($insid)
+                {
+                  if(unlink($imageID)){
+                        $returnval["response"] ="Image deleted successfully";
+                        $returnval["imageurl"] =$new_array;
+            		    $returnval["responsecode"] = 1; 
+                   }else{
+                       $returnval["response"] ="Image delete failed";
+    			       $returnval["responsecode"] = 0;
+                   }
+                }
+                else
+                {
+                    $returnval["response"] ="Image delete failed";
+    			    $returnval["responsecode"] = 0;
+    	        }
+            }
+            $dbm->dbClose();
+            return $this->common->arrayToJson($returnval);
+     }
+     
+     function deleteCompleteImage($postArr){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+            $dbm = new DB;
+            $requestCode = $postArr['requestCode'];
+            $workrequestid = $postArr['workrequestid'];
+            $imageID = $postArr['imageId'];
+
+            $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+            $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+            $whereClause = "workRequestId=$workrequestid";
+            $selectFiledsSize=array('completionImages');
+            $resSize=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFiledsSize,$whereClause);
+            if($resSize[1] > 0){
+                $workList = $dbm->fetchArray($resSize[0]);
+                $data = explode(",",$workList['completionImages']);
+                $new_array = [];
+                foreach($data as $val){
+                    if($val!==$imageID){
+                      array_push($new_array,$val);
+                    }
+                }
+                $upload_img = implode(",",$new_array);
+                $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET completionImages='".$upload_img."' WHERE workRequestId=".$workrequestid;
+                $insid = mysqli_query($connection, $sql);
+                if($insid)
+                {
+                  if(unlink($imageID)){
+                        $returnval["response"] ="Image deleted successfully";
+                        $returnval["imageurl"] =$new_array;
+            		    $returnval["responsecode"] = 1; 
+                   }else{
+                       $returnval["response"] ="Image delete failed";
+    			       $returnval["responsecode"] = 0;
+                   }
+                }
+                else
+                {
+                    $returnval["response"] ="Image delete failed";
+    			    $returnval["responsecode"] = 0;
+    	        }
+            }
+            $dbm->dbClose();
+            return $this->common->arrayToJson($returnval);
+     }
 
 	function completeimageuploads($postArr){
 	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
@@ -1219,7 +1325,7 @@ class WORKREQUESTS
                 if($insid)
                 {
                     $returnval["response"] ="Image upload success";
-                    $returnval["imageurl"] =$upload_url;
+                    $returnval["imageurl"] =$upload_url_temp;
         		    $returnval["responsecode"] = 1;
         		    return $this->common->arrayToJson($returnval);
                 }
@@ -1244,6 +1350,109 @@ class WORKREQUESTS
             return $this->common->arrayToJson($returnval);
         }
     }
+    
+  function update_drawing_image_upload($postArr){
+      
+      global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+        $dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        
+        $wrequestid=$postArr['workrequestid'];
+        $upload_url_temp=array();
+        $selectFiledsSize=array("drawingImage");
+        $whereClauseSize = "workRequestId='".$wrequestid."'";
+        $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFiledsSize,$whereClauseSize);
+        if($resSize[1] > 0){
+            $workList = $db->fetchArray($resSize[0]);
+            if($workList["drawingImage"])
+            {
+                $upload_url_temp=explode(",",$workList["drawingImage"]);
+            }
+        }
+        
+      /*  echo "<pre>";
+      print_r($upload_url_temp);
+      echo "</pre>"; */
+    
+    
+     if(isset($_FILES['drawingimage'])){
+        $filecount=count($_FILES['drawingimage']['name']);
+        $upload_url=array();
+        $folderpath="images/drawingimage/";
+        
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            $extensions= array("jpeg","jpg","png","pdf");
+            if(in_array($file_ext,$extensions)=== false){
+                $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF each file.";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if($file_size > 500000){
+                $returnval["response"] ="Each File size must be below 500 kb";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+        }
+        
+        if(!file_exists($folderpath.$postArr["uniqueId"])) {
+            mkdir($folderpath.$postArr["uniqueId"], 0777, true);
+        }
+        
+        $count=count($upload_url_temp);
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_tmp =$_FILES['drawingimage']['tmp_name'][$i];   
+            $file_ext_orginal=end(explode('.',$file_name));
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            
+            $filepath=$folderpath.$postArr["uniqueId"]."/".($count+($i+1)).'_'.time().".".$file_ext_orginal;
+            if(move_uploaded_file($file_tmp,$filepath)){
+                $upload_url[]=BASEPATH.$filepath;
+                $upload_url_temp[]=$filepath;
+            }
+        }
+        
+       /* echo "<pre>";
+        print_r($upload_url_temp);
+        echo "</pre>"; */
+        if(!empty($upload_url_temp))
+        {   
+            $insertArr=array();
+            $uploadimg=implode(",",$upload_url_temp);
+             $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+
+             $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET drawingImage='".$uploadimg."' WHERE workRequestId=".$wrequestid;
+             $insid = mysqli_query($connection, $sql);
+             if($insid)
+             {
+                $returnval["response"] ="Image upload success";
+                $returnval["basePath"] =BASEPATH;
+                $returnval["imageurl"] =$upload_url_temp;
+                $returnval["responsecode"] = 1;
+                return $this->common->arrayToJson($returnval);
+            }
+            
+        }
+        else
+        {
+            $returnval["response"] ="File Upload Failure";
+            $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
+    }
+    else
+    {
+        $returnval["response"] ="Image Need to Upload";
+        $returnval["responsecode"] = 0;
+        return $this->common->arrayToJson($returnval);
+    }
+}
 	function drawingimageupload($postArr){
         if(isset($_FILES['drawingimage'])){
             $file_name = $_FILES['drawingimage']['name'];
@@ -1286,6 +1495,84 @@ class WORKREQUESTS
             return $this->common->arrayToJson($returnval);
         }
     }
+    
+     function drawingimageupload_multiple($postArr){
+     if(isset($_FILES['drawingimage'])){
+        $filecount=count($_FILES['drawingimage']['name']);
+        $upload_url=array();
+        $folderpath="images/drawingimage/";
+        
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            $extensions= array("jpeg","jpg","png","pdf");
+            if(in_array($file_ext,$extensions)=== false){
+                $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF each file.";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if($file_size > 500000){
+                $returnval["response"] ="Each File size must be below 500 kb";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+        }
+        
+        if(!file_exists($folderpath.$postArr["uniqueId"])) {
+            mkdir($folderpath.$postArr["uniqueId"], 0777, true);
+        }
+        
+        $count=count($upload_url_temp);
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_tmp =$_FILES['drawingimage']['tmp_name'][$i];   
+            $file_ext_orginal=end(explode('.',$file_name));
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            
+            $filepath=$folderpath.$postArr["uniqueId"]."/".($count+($i+1)).'_'.time().".".$file_ext_orginal;
+            if(move_uploaded_file($file_tmp,$filepath)){
+                $upload_url[]=BASEPATH.$filepath;
+                $upload_url_temp[]=$filepath;
+            }
+        }
+        
+        if(!empty($upload_url_temp))
+        {   
+            $insertArr=array();
+            $uploadimg=implode(",",$upload_url_temp);
+            // global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+            // $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+
+            // $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET completionImages='".$uploadimg."' WHERE workRequestId=".$wrequestid;
+            // $insid = mysqli_query($connection, $sql);
+            // if!($insid)
+            // {
+                $returnval["response"] ="Image upload success";
+                $returnval["basePath"] =BASEPATH;
+                $returnval["imageurl"] =$upload_url_temp;
+                $returnval["responsecode"] = 1;
+                return $this->common->arrayToJson($returnval);
+            // }
+            
+        }
+        else
+        {
+            $returnval["response"] ="File Upload Failure";
+            $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
+    }
+    else
+    {
+        $returnval["response"] ="Image Need to Upload";
+        $returnval["responsecode"] = 0;
+        return $this->common->arrayToJson($returnval);
+    }
+}
 
     function getWorkRequestLWHSCalulatedValue($postArr){
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
