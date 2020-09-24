@@ -64,6 +64,10 @@ else if($_POST["requestCode"] == 26){
 if($obj["requestCode"] == 30){
     $response = $requestObj->getWorkRequestLWHSCalulatedValue($obj);
 }
+/*else{
+    $response = $requestObj->updateWorkRequestSeq();
+}*/
+
 
 echo $response;
  ?>
