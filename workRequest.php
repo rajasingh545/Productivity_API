@@ -9,11 +9,6 @@ include_once $ROOTPATH."/includes/class.workRequest.php";
 $requestObj = new WORKREQUESTS();
  $json = file_get_contents('php://input');
  $obj = json_decode($json, true);
-//  echo "<pre>";
-//  //print_r($_POST);
-//  print_r($obj);
-//  echo "</pre>";
-//  exit;
 //  $obj = $_POST;
  
 if($obj["requestCode"] === 14){
