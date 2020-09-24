@@ -11,8 +11,16 @@ class WORKREQUESTS
 	}
     function createWorkRequest($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-		
-       
+		    $workRequestCount=1;
+            $whereClauseCount = "select count(projectId) as projectCount from p_workrequest where projectId=".trim($postArr["value_projects"])." and clientId=".trim($postArr["value_clients"]);
+            $connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+            $workRequestCount = mysqli_query($connectionStr, $whereClauseCount);
+            $data=mysqli_fetch_assoc($workRequestCount);
+            //$usersArr[$key]['query']=$whereClauseCount;
+            //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
+            $str_length = 3; 
+            $workRequestCount  = substr("000{$data['projectCount']}", -$str_length);
+            //$usersArr[$key]['workReqCount']= $workRequestCount ;
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["clientId"]=trim($postArr["value_clients"]);
 			$insertArr["status"]=trim($postArr["status"]);
@@ -26,11 +34,13 @@ class WORKREQUESTS
 			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
 			$insertArr["location"]=trim($postArr["location1"]);	
 
-            if($insertArr["drawingAttach"]==1)
-                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            if($insertArr["drawingAttach"]==1){
+                $drawImage=implode(",",$postArr["drawingImage"]);
+                $insertArr["drawingImage"]=$drawImage;
+            }
             else
-                $insertArr["drawingImage"]='';
-			
+                $insertArr["drawingImage"]=[];
+            $insertArr["wrkArrRunningSeqNo"]=$workRequestCount;	
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 			
@@ -44,7 +54,8 @@ class WORKREQUESTS
                 }
             }
 			
-			$dbm->dbClose();
+            $dbm->dbClose();
+            //createDailyWorkTrack($postArr);
 			if($insid == 0 || $insid == ''){ 
 				$returnval["response"] ="fail";
 				$returnval["responsecode"] = 0; 
@@ -63,8 +74,6 @@ class WORKREQUESTS
 
     function updateWorkRequest($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-		
-       
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["clientId"]=trim($postArr["value_clients"]);
 			$insertArr["status"]=trim($postArr["status"]);
@@ -75,15 +84,15 @@ class WORKREQUESTS
             $insertArr["scaffoldRegister"] = trim($postArr["scaffoldRegister"]);
 			$insertArr["createdOn"]=date("Y-m-d H:i:s");
 			$insertArr["createdBy"]=trim($postArr["userId"]);	
-
-			
-			$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
+         	$insertArr["drawingAttach"]=trim($postArr["drawingAttached"]);	
 			$insertArr["location"]=trim($postArr["location1"]);
 			
-            if($insertArr["drawingAttach"]==1)
-                $insertArr["drawingImage"]=trim($postArr["drawingimage"]);
+            if($insertArr["drawingAttach"]==1){
+                $drawImage=implode(",",$postArr["drawingImage"]);
+                $insertArr["drawingImage"]=$drawImage;
+            }
             else
-                $insertArr["drawingImage"]='';
+                $insertArr["drawingImage"]=[];
 
 			
             $dbm = new DB;
@@ -246,7 +255,7 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("workRequestId","projectId","clientId","requestedBy");
+		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","createdBy","createdOn");
 
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			$addCond = "date(createdOn)='".$postArr["startDate"]."'";
@@ -260,7 +269,17 @@ class WORKREQUESTS
 		// pr($db);
 		$usersArr = array();
 		if($res[1] > 0){
-			$usersArr = $db->fetchArray($res[0], 1);
+            $usersArr = $db->fetchArray($res[0], 1);
+            $selectFiledsitem=array("Name");
+				$whereClauseitem = "userId=".$worklist['createdBy'];
+				$resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
+				if($resitem[1] > 0){
+					$itemList = $db->fetchArray($resitem[0]);
+					$usersArr["createdByName"]=$itemList['Name'];
+					
+				}else{
+					$usersArr["createdByName"]="";
+				}
 		}
 		// pr($usersArr);
  
@@ -281,6 +300,8 @@ class WORKREQUESTS
             $requesttype=$postArr['requestJsonData']['requestData']['id'];
             $projectid=$postArr['requestJsonData']['selectedProjectData']['projectId'];
             $clientid=$postArr['requestJsonData']['selectedClientData']['clientId'];
+            $workRequestCount = 1;      
+
             if(empty($fromdate))
             {
                 $fromdate=date("Y-m-d");
@@ -300,7 +321,7 @@ class WORKREQUESTS
 				$addCond.=" and createdBy=".$postArr['userId'];
 			}
             $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
-            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","createdBy","createdOn");
+            $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","createdBy","createdOn","wrkArrRunningSeqNo");
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
     		if($res[1] > 0){
     			$usersArr = $db->fetchArray($res[0], 1);
@@ -317,31 +338,55 @@ class WORKREQUESTS
     			        $usersArr[$key]["scaffoldregister"]="No";
     			    $usersArr[$key]["remarks"]=$value['remarks'];
     			    $projectid=$value['projectId'];
-    			    $selectFiledsitem=array("projectName");
+    			    $selectFiledsitem=array("projectName","projectCode");
                     $whereClauseitem = "projectId=".$projectid;
                     $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFiledsitem,$whereClauseitem);
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["projectname"]=$itemList['projectName'];
+						$usersArr[$key]["projectcode"]=strtoupper($itemList['projectCode']);
                     }
                     /** */
                     $createdbyid=$value['createdBy'];
-                    $selectFiledsitem=array("userName");
+                    $selectFiledsitem=array("Name");
                     $whereClauseitem = "userId=".$createdbyid;
                     $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
-                        $usersArr[$key]["createdByName"]=$itemList['userName'];
+                        $usersArr[$key]["createdByName"]=$itemList['Name'];
                     }
                     /** */
                     $client_id=$value['clientId'];
-    			    $selectFiledsitem=array("clientName");
+    			    $selectFiledsitem=array("clientName","clientCode");
                     $whereClauseitem = "clientId=".$client_id;
                     $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["CLIENTS"],$selectFiledsitem,$whereClauseitem);
                     if($resitem[1] > 0){
                         $itemList = $db->fetchArray($resitem[0]);
                         $usersArr[$key]["clientname"]=$itemList['clientName'];
+						 $usersArr[$key]["clientcode"]=strtoupper($itemList['clientCode']);
                     }
+                    $whereClauseCount = "select count(projectId) as projectCount from p_workrequest where projectId=".$value['projectId']." and clientId=".$value['clientId'];
+                    $connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+                   
+
+                    $workRequestCount = mysqli_query($connectionStr, $whereClauseCount);
+                    $data=mysqli_fetch_assoc($workRequestCount);
+                    $usersArr[$key]['query']=$whereClauseCount;
+                    //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
+                    $str_length = 3; 
+                    $workRequestCount  = substr("000{$value['wrkArrRunningSeqNo']}", -$str_length);
+                   // $usersArr[$key]['workReqCount']= $workRequestCount ;
+                   $usersArr[$key]['workReqCount']= $workRequestCount ;
+                   
+
+                    //$selectFileds="count(projectId)";
+                   // $workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
+                    //$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+                   // if($workRequestCount > 0){
+                        //$workRequestCount = $db->fetchArray($res[0], 1);
+                     //   $str_length = 3; 
+                     //   $workRequestCount  = substr("000{$workRequestCount}", -$str_length); 
+                   // }
                     $usersArr[$key]["location"]=$value['location'];
                     if($value['contractType']==1)
                         $usersArr[$key]["contracttype"]="Original Contract";
@@ -393,7 +438,7 @@ class WORKREQUESTS
                                             $itemList_in = $db->fetchArray($resitem_in[0]);
                                             $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
                                         }
-                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH";
+                                        $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH"." x ".$sizeDet['setcount']." No's";
                                         $a++;
                                     }
                                 }
@@ -436,30 +481,33 @@ class WORKREQUESTS
 		$selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","drawingAttach","drawingImage","completionImages","location");
     	$whereClause = "workRequestId='".$postArr["listingId"]."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
-		// pr($db);
 		$requestArr = array();
 		if($res[1] > 0){
             $requestArr["requestDetails"] = $db->fetchArray($res[0]);
             $requestArr["requestDetails"]["basePath"] = BASEPATH;
             if(!empty($requestArr["requestDetails"]['drawingImage']))
             {
-               $tempimgname=BASEPATH.$requestArr["requestDetails"]['drawingImage'];
-                $requestArr["requestDetails"]['drawingImage'] = $tempimgname;
+                $tempimgsname=explode(",",$requestArr["requestDetails"]['drawingImage']);
+                for($ik=0;$ik<count($tempimgsname);$ik++)
+                {
+                    $tempimgsname[$ik]=$tempimgsname[$ik];
+                }
+                $requestArr["requestDetails"]['drawingImage']=$tempimgsname;
             }
             else{
-                $requestArr["requestDetails"]['drawingImage'] = "";
+                $requestArr["requestDetails"]['drawingImage'] = [];
             }
             if(!empty($requestArr["requestDetails"]['completionImages']))
             {
                 $tempimgsname=explode(",",$requestArr["requestDetails"]['completionImages']);
                 for($ik=0;$ik<count($tempimgsname);$ik++)
                 {
-                    $tempimgsname[$ik]=BASEPATH.$tempimgsname[$ik];
+                    $tempimgsname[$ik]=$tempimgsname[$ik];
                 }
                 $requestArr["requestDetails"]['completionImages']=$tempimgsname;
             }
             else{
-                $requestArr["requestDetails"]['completionImages']="";
+                $requestArr["requestDetails"]['completionImages']=[];
             }
             
             $selectFiledsitem=array("id","workRequestId","itemId","sizeType","previousWR","workBased","contractType");
@@ -571,6 +619,7 @@ class WORKREQUESTS
            $insertArr["createdOn"] = date("Y-m-d H:i:s");	
            $insertArr["status"] = trim($postArr["listingstatus"]);
            $insertArr["uniqueId"] = trim($postArr["uniqueId"]);
+           $insertArr["createdBy"] = trim($postArr["userId"]);
         
 
 			$dbm = new DB;
@@ -778,7 +827,7 @@ class WORKREQUESTS
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","remarks","workRequestId");
+		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","remarks","workRequestId","createdBy","createdOn");
 
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			$addCond = "date(createdOn)='".$postArr["startDate"]."'";
@@ -795,9 +844,21 @@ class WORKREQUESTS
 			$usersArr = $db->fetchArray($res[0], 1);
 			foreach($usersArr as $key=>$trackvalue)
 			{
-			    $usersArr[$key]["requestItems"]=[];
+               // $usersArr[$key]["createdByName"]=$key;
+              //  $usersArr[$key]["createdByVal"]=$trackvalue[$createdBy];
+                $selectFiledsitem11=array("Name");
+                        $whereClauseitem11 = "userId=".$trackvalue['createdBy'];
+                        $resitem11=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem11,$whereClauseitem11);
+                        if($resitem11[1] > 0){
+                            $itemList11 = $db->fetchArray($resitem11[0]);
+                            $usersArr[$key]["createdByName"] =$itemList11['Name'];
+                            
+                        }else{
+                            $usersArr[$key]["createdByName"]="";
+                        }
+                $usersArr[$key]["requestItems"]=[];
 			    $usersArr[$key]["requestSizeList"]=[];
-			    $usersArr[$key]["requestMatList"]=[];
+                $usersArr[$key]["requestMatList"]=[];                  
 			    $wtrackid=$trackvalue["worktrackId"];
                 $selectFiledsitem=array("id","workRequestId", "subDivisionId","length", "height","width","setcount","status");
                 $whereClauseitem = "worktrackId='".$wtrackid."'";
@@ -816,8 +877,9 @@ class WORKREQUESTS
                         else{
                             $cstatus="Full Size";
                         }
-                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - "." X ".$item["setcount"].$cstatus;
+                        $item["expanditems"]=$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH - "." X ".$item["setcount"]." No's";
                         $usersArr[$key]["requestItems"][$k] = $item;
+                        
                         $k++;
                     }
                 }
@@ -1090,6 +1152,105 @@ class WORKREQUESTS
             $dbm->dbClose();
             return $this->common->arrayToJson($returnval);
      }
+     
+     
+     function deleteDrawImage($postArr){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+            $dbm = new DB;
+           /* echo "<pre>";
+            print_r($postArr);
+            echo "</pre>";
+            exit; */
+            $requestCode = $postArr['requestCode'];
+            $workrequestid = $postArr['workrequestid'];
+            $imageID = $postArr['imageId'];
+
+            $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+            $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+            $whereClause = "workRequestId=$workrequestid";
+            $selectFiledsSize=array('drawingImage');
+            $resSize=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFiledsSize,$whereClause);
+            if($resSize[1] > 0){
+                $workList = $dbm->fetchArray($resSize[0]);
+               // $img =explode("images",$imageID);
+                //$sel = "images".$img[1];
+                $data = explode(",",$workList['drawingImage']);
+                $new_array = [];
+                //$send_array = [];
+                foreach($data as $val){
+                    if($val!==$imageID){
+                      array_push($new_array,$val);
+                      //array_push($send_array,BASEPATH.$val);
+                    }
+                }
+                $upload_img = implode(",",$new_array);
+                $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET drawingImage='".$upload_img."' WHERE workRequestId=".$workrequestid;
+                $insid = mysqli_query($connection, $sql);
+                if($insid)
+                {
+                  if(unlink($imageID)){
+                        $returnval["response"] ="Image deleted successfully";
+                        $returnval["imageurl"] =$new_array;
+            		    $returnval["responsecode"] = 1; 
+                   }else{
+                       $returnval["response"] ="Image delete failed";
+    			       $returnval["responsecode"] = 0;
+                   }
+                }
+                else
+                {
+                    $returnval["response"] ="Image delete failed";
+    			    $returnval["responsecode"] = 0;
+    	        }
+            }
+            $dbm->dbClose();
+            return $this->common->arrayToJson($returnval);
+     }
+     
+     function deleteCompleteImage($postArr){
+        global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+            $dbm = new DB;
+            $requestCode = $postArr['requestCode'];
+            $workrequestid = $postArr['workrequestid'];
+            $imageID = $postArr['imageId'];
+
+            $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+            $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+            $whereClause = "workRequestId=$workrequestid";
+            $selectFiledsSize=array('completionImages');
+            $resSize=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFiledsSize,$whereClause);
+            if($resSize[1] > 0){
+                $workList = $dbm->fetchArray($resSize[0]);
+                $data = explode(",",$workList['completionImages']);
+                $new_array = [];
+                foreach($data as $val){
+                    if($val!==$imageID){
+                      array_push($new_array,$val);
+                    }
+                }
+                $upload_img = implode(",",$new_array);
+                $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET completionImages='".$upload_img."' WHERE workRequestId=".$workrequestid;
+                $insid = mysqli_query($connection, $sql);
+                if($insid)
+                {
+                  if(unlink($imageID)){
+                        $returnval["response"] ="Image deleted successfully";
+                        $returnval["imageurl"] =$new_array;
+            		    $returnval["responsecode"] = 1; 
+                   }else{
+                       $returnval["response"] ="Image delete failed";
+    			       $returnval["responsecode"] = 0;
+                   }
+                }
+                else
+                {
+                    $returnval["response"] ="Image delete failed";
+    			    $returnval["responsecode"] = 0;
+    	        }
+            }
+            $dbm->dbClose();
+            return $this->common->arrayToJson($returnval);
+     }
 
 	function completeimageuploads($postArr){
 	    global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
@@ -1164,7 +1325,7 @@ class WORKREQUESTS
                 if($insid)
                 {
                     $returnval["response"] ="Image upload success";
-                    $returnval["imageurl"] =$upload_url;
+                    $returnval["imageurl"] =$upload_url_temp;
         		    $returnval["responsecode"] = 1;
         		    return $this->common->arrayToJson($returnval);
                 }
@@ -1189,6 +1350,109 @@ class WORKREQUESTS
             return $this->common->arrayToJson($returnval);
         }
     }
+    
+  function update_drawing_image_upload($postArr){
+      
+      global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+        $dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        
+        $wrequestid=$postArr['workrequestid'];
+        $upload_url_temp=array();
+        $selectFiledsSize=array("drawingImage");
+        $whereClauseSize = "workRequestId='".$wrequestid."'";
+        $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFiledsSize,$whereClauseSize);
+        if($resSize[1] > 0){
+            $workList = $db->fetchArray($resSize[0]);
+            if($workList["drawingImage"])
+            {
+                $upload_url_temp=explode(",",$workList["drawingImage"]);
+            }
+        }
+        
+      /*  echo "<pre>";
+      print_r($upload_url_temp);
+      echo "</pre>"; */
+    
+    
+     if(isset($_FILES['drawingimage'])){
+        $filecount=count($_FILES['drawingimage']['name']);
+        $upload_url=array();
+        $folderpath="images/drawingimage/";
+        
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            $extensions= array("jpeg","jpg","png","pdf");
+            if(in_array($file_ext,$extensions)=== false){
+                $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF each file.";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if($file_size > 500000){
+                $returnval["response"] ="Each File size must be below 500 kb";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+        }
+        
+        if(!file_exists($folderpath.$postArr["uniqueId"])) {
+            mkdir($folderpath.$postArr["uniqueId"], 0777, true);
+        }
+        
+        $count=count($upload_url_temp);
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_tmp =$_FILES['drawingimage']['tmp_name'][$i];   
+            $file_ext_orginal=end(explode('.',$file_name));
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            
+            $filepath=$folderpath.$postArr["uniqueId"]."/".($count+($i+1)).'_'.time().".".$file_ext_orginal;
+            if(move_uploaded_file($file_tmp,$filepath)){
+                $upload_url[]=BASEPATH.$filepath;
+                $upload_url_temp[]=$filepath;
+            }
+        }
+        
+       /* echo "<pre>";
+        print_r($upload_url_temp);
+        echo "</pre>"; */
+        if(!empty($upload_url_temp))
+        {   
+            $insertArr=array();
+            $uploadimg=implode(",",$upload_url_temp);
+             $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+
+             $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET drawingImage='".$uploadimg."' WHERE workRequestId=".$wrequestid;
+             $insid = mysqli_query($connection, $sql);
+             if($insid)
+             {
+                $returnval["response"] ="Image upload success";
+                $returnval["basePath"] =BASEPATH;
+                $returnval["imageurl"] =$upload_url_temp;
+                $returnval["responsecode"] = 1;
+                return $this->common->arrayToJson($returnval);
+            }
+            
+        }
+        else
+        {
+            $returnval["response"] ="File Upload Failure";
+            $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
+    }
+    else
+    {
+        $returnval["response"] ="Image Need to Upload";
+        $returnval["responsecode"] = 0;
+        return $this->common->arrayToJson($returnval);
+    }
+}
 	function drawingimageupload($postArr){
         if(isset($_FILES['drawingimage'])){
             $file_name = $_FILES['drawingimage']['name'];
@@ -1231,6 +1495,84 @@ class WORKREQUESTS
             return $this->common->arrayToJson($returnval);
         }
     }
+    
+     function drawingimageupload_multiple($postArr){
+     if(isset($_FILES['drawingimage'])){
+        $filecount=count($_FILES['drawingimage']['name']);
+        $upload_url=array();
+        $folderpath="images/drawingimage/";
+        
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            $extensions= array("jpeg","jpg","png","pdf");
+            if(in_array($file_ext,$extensions)=== false){
+                $returnval["response"] ="Extension not allowed, Please choose a JPEG, PNG or PDF each file.";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+            if($file_size > 500000){
+                $returnval["response"] ="Each File size must be below 500 kb";
+                $returnval["responsecode"] = 0;
+                return $this->common->arrayToJson($returnval);
+            }
+        }
+        
+        if(!file_exists($folderpath.$postArr["uniqueId"])) {
+            mkdir($folderpath.$postArr["uniqueId"], 0777, true);
+        }
+        
+        $count=count($upload_url_temp);
+        for($i=0;$i<$filecount;$i++)
+        {
+            $file_name = $_FILES['drawingimage']['name'][$i];
+            $file_size =$_FILES['drawingimage']['size'][$i];
+            $file_tmp =$_FILES['drawingimage']['tmp_name'][$i];   
+            $file_ext_orginal=end(explode('.',$file_name));
+            $file_ext=strtolower(end(explode('.',$file_name)));
+            
+            $filepath=$folderpath.$postArr["uniqueId"]."/".($count+($i+1)).'_'.time().".".$file_ext_orginal;
+            if(move_uploaded_file($file_tmp,$filepath)){
+                $upload_url[]=BASEPATH.$filepath;
+                $upload_url_temp[]=$filepath;
+            }
+        }
+        
+        if(!empty($upload_url_temp))
+        {   
+            $insertArr=array();
+            $uploadimg=implode(",",$upload_url_temp);
+            // global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+            // $connection = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+
+            // $sql = "UPDATE ".$TABLEINFO["WORKREQUEST"]." SET completionImages='".$uploadimg."' WHERE workRequestId=".$wrequestid;
+            // $insid = mysqli_query($connection, $sql);
+            // if!($insid)
+            // {
+                $returnval["response"] ="Image upload success";
+                $returnval["basePath"] =BASEPATH;
+                $returnval["imageurl"] =$upload_url_temp;
+                $returnval["responsecode"] = 1;
+                return $this->common->arrayToJson($returnval);
+            // }
+            
+        }
+        else
+        {
+            $returnval["response"] ="File Upload Failure";
+            $returnval["responsecode"] = 0;
+            return $this->common->arrayToJson($returnval);
+        }
+    }
+    else
+    {
+        $returnval["response"] ="Image Need to Upload";
+        $returnval["responsecode"] = 0;
+        return $this->common->arrayToJson($returnval);
+    }
+}
 
     function getWorkRequestLWHSCalulatedValue($postArr){
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
@@ -1255,6 +1597,75 @@ class WORKREQUESTS
         return $this->common->arrayToJson($result);
 		
     }
+
+    /*  -- new function */
+    
+    function updateWorkRequestSeq(){
+       global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+         $db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+        $selectFileds=array("projectId");
+        $whereClause="  1 = 1";
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+		// pr($db);
+        $projectIdArr = array();
+        $clientIdArr = array();
+        $projIdList = array();
+        $clientIdList = array();
+        $projectArrList=array();
+        $workReqArr=array();
+        if($res[1] > 0){
+			$projectIdArr = $db->fetchArray($res[0], 1); 
+			
+			foreach($projectIdArr as $projectId){
+				array_push($projIdList, $projectId["projectId"]);
+			}        	
+		}
+        $selectFileds=array("clientId");
+        //$whereClause="  1 = 1";
+        $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+        if($res[1] > 0){
+			$clientIdArr = $db->fetchArray($res[0], 1); 
+			
+			foreach($clientIdArr as $clientId){
+				array_push($clientIdList, $clientId["clientId"]);
+			}        	
+		}
+        
+        $projIdList=array_unique($projIdList);
+        $clientIdList=array_unique($clientIdList);
+
+        foreach($projIdList as $projectId)
+        {
+           $workRequestCount=1;
+           foreach($clientIdList as $clientId)
+            {
+              $selectFileds=array("workRequestId");
+               $whereClause =  "projectId=".$projectId." and clientId =".$clientId." order by  workRequestId asc" ;
+                $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
+
+                if($res[1] > 0){
+                    $workReqArr = $db->fetchArray($res[0], 1);
+                    foreach($workReqArr as $workReqId)
+                    {
+                        $insertArr["wrkArrRunningSeqNo"]=$workRequestCount;
+                        $dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+                        $whereClause1 = "workRequestId=".$workReqId["workRequestId"];
+                        $insid = $db->update($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$insertArr,$whereClause1);
+                        $workRequestCount++;
+                    }
+                }                                       
+                     
+            }    
+        }
+
+
+
+		return "Running sequence updated successfully";
+    }
+
+    /*  end here */
+
 }
 
 ?>

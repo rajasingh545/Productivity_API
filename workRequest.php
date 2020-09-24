@@ -9,6 +9,11 @@ include_once $ROOTPATH."/includes/class.workRequest.php";
 $requestObj = new WORKREQUESTS();
  $json = file_get_contents('php://input');
  $obj = json_decode($json, true);
+//  echo "<pre>";
+//  //print_r($_POST);
+//  print_r($obj);
+//  echo "</pre>";
+//  exit;
 //  $obj = $_POST;
  
 if($obj["requestCode"] === 14){
@@ -38,26 +43,32 @@ elseif($obj["requestCode"] === 22){
 }
 elseif($obj["requestCode"] === 23){
     $response = $requestObj->getWorkRequestListDate($obj);
+}else if($obj["requestCode"] === 27){
+    $response = $requestObj->deleteDrawImage($obj);
+}else if($obj["requestCode"] === 28){
+    $response = $requestObj->deleteCompleteImage($obj);
 }
 
 if($_POST["requestCode"] == 24){
-    $response = $requestObj->drawingimageupload($_POST);
+    $response = $requestObj->drawingimageupload_multiple($_POST);
+}else if($_POST["requestCode"] == 52){
+    $response = $requestObj->update_drawing_image_upload($_POST);
 }
 else if($_POST["requestCode"] == 25){
     $response = $requestObj->completeimageuploads($_POST);
-}
-
-if($_POST["requestCode"] == 20){
+}else if($_POST["requestCode"] == 20){
     $response = $requestObj->imageUploads($_POST);
 }
 else if($_POST["requestCode"] == 26){
     $response = $requestObj->unlink_imageUploads($_POST);
+}else if($obj["requestCode"] == 50){
+    $response = $requestObj->updateWorkRequestSeq();
 }
+
 
 if($obj["requestCode"] == 30){
     $response = $requestObj->getWorkRequestLWHSCalulatedValue($obj);
 }
 
 echo $response;
-
  ?>
