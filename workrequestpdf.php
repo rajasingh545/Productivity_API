@@ -607,7 +607,7 @@ $pdf->writeHTML($html, true, false, true, false, '');
 //$pdf->writeHTML($html, true, false, true, false, '');
 //$pdf->startPageGroup();
 //$html='<div>'.$imgdisp.'</div>';
-if(!empty(completionimage))
+if(!empty($completionimage))
     {
 $pdf->AddPage();
 /** String */
