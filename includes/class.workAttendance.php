@@ -715,7 +715,7 @@ class REQUESTS
 		$dbcon = $db->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 
 		$selectFileds = array("workerId");
-		$whereClause = "workArrangementId != $workArrangementID AND dateWithOutTime != '0000-00-00 00:00:00' AND dateWithOutTime > '".date("Y-m-d h:i:s")."'";
+		$whereClause = "workArrangementId != $workArrangementID AND dateWithOutTime != '0000-00-00 00:00:00' AND dateWithOutTime > '".date("Y-m-d H:i:s")."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds,$whereClause);
 		$finalWorkers = [];
 		if($res[1] > 0){
