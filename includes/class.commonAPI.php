@@ -367,10 +367,12 @@ class commonAPI
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		$whereClauseat = "forDate='".date("Y-m-d")."'  and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		//	$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		    $whereClauseat = "forDate='".$postArr["startDate"]."' and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		}
 		//echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
@@ -403,11 +405,13 @@ class commonAPI
 		}
 		
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0 and draftStatus=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		//$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0 and draftStatus=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		$whereClauseat = "forDate='".date("Y-m-d")."' and isSupervisor=0  and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 			//$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and outTime='00:00:00' and partial=0";
-			$whereClauseat = "forDate='".$postArr["startDate"]."' and  isSupervisor=0 and draftStatus=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+			//$whereClauseat = "forDate='".$postArr["startDate"]."' and  isSupervisor=0 and draftStatus=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+			$whereClauseat = "forDate='".$postArr["startDate"]."' and  isSupervisor=0 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		}
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);
 		if($resat[1] > 0){
