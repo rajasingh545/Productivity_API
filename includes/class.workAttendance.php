@@ -18,13 +18,13 @@ class REQUESTS
 		$requestType = $postArr["requestType"];
 		$userID = $postArr["userId"];
 		$userType = $postArr["userType"];
-		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks","createdBy","status");
+		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks","createdBy","status","projBaseSupervisor");
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			if($userType == 1){
 				$addCond = "createdOn='".$postArr["startDate"]."'";
 			}
 			else{
-				$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID or addSupervsor like '%$userID%')";
+				$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID or projBaseSupervisor = $userID or addSupervsor like '%$userID%')";
 				//$addCond = "createdOn='".$postArr["startDate"]."' and (baseSupervsor = $userID)";
 				
 			}
@@ -102,11 +102,11 @@ class REQUESTS
             $whereClause = "(status=3 OR status= 4) AND ".$addCond." order by workArrangementId desc";		
             $res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
             $projectArr = array();
-            $count_submit=count($results);
-    		if($res[1] > 0){
+			$count_submit=count($results);
+			if($res[1] > 0){
     			$projectArr = $db->fetchArray($res[0], 1);
     			foreach($projectArr as $key=>$det){
-    				$whereClause2 = "workArrangementId=".$det["workArrangementId"]." and isSupervisor !=1";
+					$whereClause2 = "workArrangementId=".$det["workArrangementId"]." and isSupervisor !=1";
     				$selectFileds2 = array("workerId");
     				$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds2,$whereClause2);
     				$listingDetails = array();
@@ -145,20 +145,20 @@ class REQUESTS
 						}else{
 							$det['isDeleted']=false;
 						}
-    					$results[$count_submit] =  $det;
-    					$results[$count_submit]["workers"] = $workeridFinal;
-    					$results[$count_submit]["isNew"] = false;
-    					$results[$count_submit]["workersteamlist"] = $workeridteams;
-						$count_submit++;
 						$selectFiledsitem=array("Name");
 						$whereClauseitem = "userId=".$det['createdBy'];
 						$resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFiledsitem,$whereClauseitem);
 						if($resitem[1] > 0){
 							$itemList = $db->fetchArray($resitem[0]);
-							$results[$key]["createdByName"]=$itemList['Name'];
+							$det["createdByName"]=$itemList['Name'];
 						}else{
-							$results[$key]["createdByName"]="";
-						}						
+							$det["createdByName"]="";
+						}	
+    					$results[$count_submit] =  $det;
+    					$results[$count_submit]["workers"] = $workeridFinal;
+    					$results[$count_submit]["isNew"] = false;
+    					$results[$count_submit]["workersteamlist"] = $workeridteams;
+						$count_submit++;											
 					}   					
     			}      	
     		}
@@ -915,7 +915,14 @@ class REQUESTS
 			
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-			
+			$selectFileds=array("userId");
+		    $whereClause = "projectId = ".trim($postArr["value_projects"]);
+
+			$res=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["PROJECTS"],$selectFileds,$whereClause);
+			if($res[1] > 0){
+				$details = $dbm->fetchArray($res[0], 1);
+				$insertArr["projBaseSupervisor"]=$details[0]["userId"];
+			}
 			$insid = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$insertArr,1,2);
 			
 			// tracking supervisor attendance
