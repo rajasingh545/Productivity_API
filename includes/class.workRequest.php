@@ -19,7 +19,14 @@ class WORKREQUESTS
             //$usersArr[$key]['query']=$whereClauseCount;
             //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
             $str_length = 3; 
-            $workRequestCount  = substr("000{$data['projectCount']}", -$str_length);
+            if ($data['projectCount'] == 0)
+            {
+                $workRequestCount=1; 
+            }else{
+                $workRequestCount=$data['projectCount']; 
+
+            }
+            $workRequestCount  = substr("000{$workRequestCount}", -$str_length);
             //$usersArr[$key]['workReqCount']= $workRequestCount ;
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
 			$insertArr["clientId"]=trim($postArr["value_clients"]);
@@ -48,7 +55,7 @@ class WORKREQUESTS
                     $this->insertItemList($postArr, $insid);
                 }
                 if(trim($postArr["cType"]) == 2){ //if its variaion works
-                    $this->insertVariationWorks($postArr, $insid);
+                    $this->insertVariationWorks($postArr, $insid,$workRequestCount);
                 }
             }
 			
@@ -128,7 +135,7 @@ class WORKREQUESTS
 		return $this->common->arrayToJson($returnval);
     }
 
-    function insertVariationWorks($postArr, $insid){
+    function insertVariationWorks($postArr, $insid,$workRequestCount){
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
         $dbm = new DB;
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
@@ -141,7 +148,8 @@ class WORKREQUESTS
         $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTITEMS"],$insertItemArr,1,2);
         $azRange = range('A', 'Z');
         $i =0; 
-        $invID = str_pad($insid, 4, '0', STR_PAD_LEFT);
+        $invID = str_pad(
+            $workRequestCount, 4, '0', STR_PAD_LEFT);
         if($insid2 != 0 && $insid2 != ''){
             if($postArr["workBased"] == 1){
                 foreach($postArr["sizeList"] as $itemList){

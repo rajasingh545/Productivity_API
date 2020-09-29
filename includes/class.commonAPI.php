@@ -661,7 +661,7 @@ class commonAPI
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("workRequestId");
+		$selectFileds=array("workRequestId","wrkArrRunningSeqNo");
 		$whereClause = "status='1'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
 		
@@ -672,7 +672,7 @@ class commonAPI
 			
 			$usersArr = $db->fetchArray($res[0], 1);
 			foreach($usersArr as $key=>$item){
-				$invID = str_pad($item["workRequestId"], 4, '0', STR_PAD_LEFT);
+				$invID = str_pad($item["wrkArrRunningSeqNo"], 4, '0', STR_PAD_LEFT);
 				$listArr[$key]["workRequestId"] = $item["workRequestId"];
 				$listArr[$key]["workRequestIdStr"] = "WR".$invID;
 			}
@@ -740,7 +740,7 @@ class commonAPI
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("workRequestId","requestedBy");		
+		$selectFileds=array("workRequestId","requestedBy","wrkArrRunningSeqNo");		
 		$whereClause = "projectId=".$postArr["value_projects"]." and clientId=".$postArr["value_clients"];
 		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUEST"],$selectFileds,$whereClause);
@@ -754,7 +754,7 @@ class commonAPI
 			$resultArrr["workRequests"] = $listArr;
 
 			foreach($listArr as $key => $val){
-				$invID = str_pad($val["workRequestId"], 4, '0', STR_PAD_LEFT);
+				$invID = str_pad($val["wrkArrRunningSeqNo"], 4, '0', STR_PAD_LEFT);
 				$resultArrr["workRequests"][$key]["workRequestId"] = $val["workRequestId"];
 				$resultArrr["workRequests"][$key]["workRequestStrId"] = "WR".$invID;
 				$resultArrr["workRequests"][$key]["requestedBy"] = $val["requestedBy"];
