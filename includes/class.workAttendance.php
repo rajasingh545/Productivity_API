@@ -677,7 +677,7 @@ class REQUESTS
 					{
 						$ids["inTimeEntered"] =false;
 					}else{
-						$ids["inTimeEntered"] =true;
+						$ids["inTimeEntered"] =true;						
 					}
 					if(strcmp($ids["outTime"],"00:00:00") == 0)
 					{
