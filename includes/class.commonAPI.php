@@ -73,6 +73,41 @@ class commonAPI
 			// $projectArr["workArrangementProj"]="test";
 		}
  
+		$selectFileds=array("projectId","workArrangementId");
+		$whereClause = "createdOn= '".$obj['startDate']."'";
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
+		$workArrangementIdList = array();
+		if($res[1] > 0){
+			$projectIdList = $db->fetchArray($res[0], 1); 
+			foreach($projectIdList as $key=>$det)
+			{
+				$selectFileds=array("workArrangementId");
+				$whereClause = "draftStatus = 1  AND (inTime <> '00:00:00' OR outTime <> '00:00:00') AND workArrangementId =".$det['workArrangementId'];
+				$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFileds,$whereClause);
+				if($res[1] > 0){
+					//$workArrangementIdList = $db->fetchArray($res[0], 1); 
+					array_push($workArrangementIdList,$det['projectId']);
+				}
+			}
+			
+		}
+		   //$projectArr['workList']=$workArrangementIdList;
+			if(!empty($workArrangementIdList))
+			{
+			  foreach($workArrangementIdList as $projectId) 
+			  {
+				  $index=0;
+				foreach($projectArr as $key=>$det)
+				{
+					if($projectId == $det['projectId'])
+					{
+					  unset($projectArr[$index]);
+					  $projectArr=array_values($projectArr);
+					}
+					$index++;
+				}
+			  }
+			}
 		return $projectArr;
 	}
 	function teamDetails($obj){
