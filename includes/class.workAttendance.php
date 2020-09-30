@@ -273,8 +273,9 @@ class REQUESTS
 						$getsupervisor=[];
                         $temp_sup=[];
                         if(count($projectArr['addSupervsor'])>0)
-                            $temp_sup=$projectArr['addSupervsor'];
-                        if(count($temp_sup)>0)
+							$temp_sup=$projectArr['addSupervsor'];
+						else	
+                        //if(count($temp_sup)>0)
                             $temp_sup[]=$projectArr['baseSupervsor'];
 						 if(!empty($temp_sup))   
 						 {
