@@ -72,7 +72,8 @@ class commonAPI
 			  }
 			// $projectArr["workArrangementProj"]="test";
 		}
- 
+		if($obj['requestCode'] != 2)
+		{
 		$selectFileds=array("projectId","workArrangementId");
 		$whereClause = "createdOn= '".$obj['startDate']."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKARRANGEMENTS"],$selectFileds,$whereClause);
@@ -108,6 +109,8 @@ class commonAPI
 				}
 			  }
 			}
+		}
+		//$projectArr['requestCode']=$obj['requestCode'] ;
 		return $projectArr;
 	}
 	function teamDetails($obj){
