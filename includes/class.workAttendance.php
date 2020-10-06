@@ -274,7 +274,7 @@ class REQUESTS
                         $temp_sup=[];
                         if(count($projectArr['addSupervsor'])>0)
 							$temp_sup=$projectArr['addSupervsor'];
-						else	
+						//else	
                         //if(count($temp_sup)>0)
                             $temp_sup[]=$projectArr['baseSupervsor'];
 						 if(!empty($temp_sup))   
@@ -777,7 +777,8 @@ class REQUESTS
                     $workerids = $db->fetchArray($res2[0],1);
                     foreach($workerids as $ids){
                         $ids["remarks"] = $details[0]["attendanceRemark"];
-                        
+						$ids["inTime"]=substr($ids["inTime"],0,-3) ;
+						$ids["outTime"]=substr($ids["outTime"],0,-3) ;
                         $worker_team = $ids["workerTeam"];
                         $whereClause4="teamid=".$worker_team;	
                         $selectFileds4 = array("teamName");
