@@ -18,7 +18,7 @@ class REQUESTS
 		$requestType = $postArr["requestType"];
 		$userID = $postArr["userId"];
 		$userType = $postArr["userType"];
-		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks","createdBy","status","projBaseSupervisor");
+		$selectFileds=array("workArrangementId","projectId","baseSupervsor","addSupervsor","createdOn","remarks","createdBy","status","projBaseSupervisor","createdSysDate");
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
 			if($userType == 1){
 				$addCond = "createdOn='".$postArr["startDate"]."'";
@@ -86,7 +86,8 @@ class REQUESTS
                         $results[$key]["createdByName"]=$itemList['Name'];
 					}else{
 						$results[$key]["createdByName"]="";
-					}					
+					}
+					$results[$key]["createdOn"]=$results[$key]["createdSysDate"];
 				}    
 			}      	
 	
@@ -154,6 +155,7 @@ class REQUESTS
 						}else{
 							$det["createdByName"]="";
 						}	
+						$det["createdOn"]=$det["createdSysDate"];
     					$results[$count_submit] =  $det;
     					$results[$count_submit]["workers"] = $workeridFinal;
     					$results[$count_submit]["isNew"] = false;
@@ -911,6 +913,7 @@ class REQUESTS
 			//$insertArr["addSupervsor"]=trim($postArr["value_supervisors2"]);
 			$insertArr["addSupervsor"]=$addSupervsor;
 			$insertArr["createdBy"]=trim($postArr["userID"]);
+			$insertArr["createdOn"]=trim($postArr["startDate"]);
 			$insertArr["createdOn"]=trim($postArr["startDate"]);
 			$insertArr["remarks"]=trim($postArr["remarks"]);
 			$insertArr["status"]=trim($postArr["status"]);		
