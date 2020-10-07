@@ -406,11 +406,11 @@ class commonAPI
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
 		//$whereClauseat = "forDate='".date("Y-m-d")."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
-		$whereClauseat = "forDate='".date("Y-m-d")."'  and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		$whereClauseat = "forDate='".date("Y-m-d")."'  and draftStatus!=3 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		$selectFiledsat=array("workerId");
 		if($postArr["startDate"] != ""){
 		//	$whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus=1 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
-		    $whereClauseat = "forDate='".$postArr["startDate"]."' and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
+		    $whereClauseat = "forDate='".$postArr["startDate"]."' and draftStatus!=3 and isSupervisor=1 and (partial=0 or (partial=1 and outTime!='00:00:00'))";
 		}
 		//echo $whereClauseat;
 		$resat=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$selectFiledsat,$whereClauseat);

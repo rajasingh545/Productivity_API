@@ -298,7 +298,16 @@ class WORKREQUESTS
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		
+		$whereClause="userId=".$postArr['userId'];
+			$selectFileds=array("project");
+			$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
+			if($res[1] > 0){
+				$projectIdList = $db->fetchArray($res[0], 1); 
+              }
+              foreach($projectIdList as $key=>$det)
+                {
+                   $projectList=$det["project"];
+                }	
 		$requestdata=$postArr['requestJsonData'];
 		$usersArr = array();
         if(!empty($requestdata))
@@ -326,7 +335,7 @@ class WORKREQUESTS
                 $addCond.=" and clientId=".$clientid;
             if($postArr['userType'] != 1)
 			{
-				$addCond.=" and createdBy=".$postArr['userId'];
+				$addCond.="and projectId IN (".$projectList.")";
 			}
             $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
             $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","createdBy","createdOn","wrkArrRunningSeqNo");
