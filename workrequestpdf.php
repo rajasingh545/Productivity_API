@@ -29,10 +29,10 @@ class MYPDF extends TCPDF {
     //Page header
     public function Header() {
         // Logo
-        if ($this->page != 2) {
+        //if ($this->page != 2) {
             $image_file = 'TCPDF-master/img/VSS_LH_29062020.jpg';
             $this->Image($image_file, 0, 3, 160, '', 'JPG', '', 'T', false, 300, 'C', false, false, 0, false, false, false);
-        }
+        /*}*/
     }
     
     // Page footer
@@ -235,6 +235,12 @@ if(!empty($vari))
     if ($vari[0]['drawingimage'] != '')
     {
     $drawingimage="http://".$_SERVER['HTTP_HOST']."/productivity-api/".$vari[0]['drawingimage'];
+    $drawImageArray=explode(",",$vari[0]['drawingimage']);
+    $drawingimage = [];
+    foreach($drawImageArray as $singleImage){
+        //$newImage = "http://".$_SERVER['HTTP_HOST']."/productivity-api/".$singleImage;
+        array_push($drawingimage,$singleImage);
+    }
     }
     else{
         $drawingimage="";
@@ -568,46 +574,22 @@ $html = '<br /><br />
 	<tr>
 		<td colspan="4"><br /><br /><br /></td>
 	</tr>
-</table>
-<img src="'.$drawingimage.'" />';
-/*$j=1;
-foreach($completionimage as $imagepath)
-    {
-     if(j == 1)
-     {
-        $imgdisp=$imgdisp.'<table><tr>';   
-     }
-     $imgdisp=$imgdisp.'<td><img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$imagepath.'" width="300 px"/></td>';
-     if (j/3 == 0)
-     {
-        $imgdisp=$imgdisp.'</tr><tr>';   
-     }
-     $j++;
-    }
-    $imgdisp=$imgdisp.'</tr></table>';
-*/
+</table>';
 
-
-
-
-// output the HTML content
-//$pdf->writeHTML($html, true, false, true, false, '');
-
-//Close and output PDF document
-//$pdf->Output('workrequestform.pdf', 'I');
-//$pdf->writeHTML($html, true, false, true, false, '');
-//$pdf->Output('workrequestform.pdf', 'I');
-//$pdf->AddPage();
-//$pdf->AddPage('P', 'A4');
-
-//$pdf->Cell(0, 0, 'A4 PORTRAIT', 1, 1, 'C');
-//$pdf->AddPage();
-//$pdf->Cell(0, 10, ''<div>'.$imgdisp.'</div>'', 0, 1, 'L');
 $pdf->writeHTML($html, true, false, true, false, '');
-//$pdf->writeHTML($html, true, false, true, false, '');
-//$pdf->startPageGroup();
-//$html='<div>'.$imgdisp.'</div>';
-if(!empty($completionimage))
+
+if(!empty($drawingimage)){
+    $imgdisp = '';
+    foreach($drawingimage as $drawimagepath)
+        {
+        $pdf->AddPage();	
+        $imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
+        $html='<br /><br /><div style="margin:50px;">'.$imgdisp.'</div>';
+        $pdf->writeHTML($html, true, false, true, false, '');
+     }
+}
+
+if(!empty(completionimage))
     {
 $pdf->AddPage();
 /** String */
