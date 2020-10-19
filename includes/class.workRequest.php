@@ -1408,8 +1408,8 @@ class WORKREQUESTS
                 $returnval["responsecode"] = 0;
                 return $this->common->arrayToJson($returnval);
             }
-            if($file_size > 500000){
-                $returnval["response"] ="Each File size must be below 500 kb";
+            if($file_size > 1000000){
+                $returnval["response"] ="Each File size must be below 1000 kb";
                 $returnval["responsecode"] = 0;
                 return $this->common->arrayToJson($returnval);
             }
@@ -1530,8 +1530,8 @@ class WORKREQUESTS
                 $returnval["responsecode"] = 0;
                 return $this->common->arrayToJson($returnval);
             }
-            if($file_size > 500000){
-                $returnval["response"] ="Each File size must be below 500 kb";
+            if($file_size > 1000000){
+                $returnval["response"] ="Each File size must be below 1000 kb";
                 $returnval["responsecode"] = 0;
                 return $this->common->arrayToJson($returnval);
             }
