@@ -852,6 +852,7 @@ class REQUESTS
 						$updateArr["statusOut"] = $postArr["type"];
 					}
 					$updateArr["createdBy"] = $postArr["userId"];
+					$updateArr["remarks"] = $postArr["remarks"];
 				$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["ATTENDANCE"],$updateArr,$whereClause);
 
 			}
