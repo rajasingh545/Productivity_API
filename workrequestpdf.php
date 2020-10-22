@@ -589,7 +589,7 @@ if(!empty($drawingimage)){
      }
 }
 
-if(!empty(completionimage))
+if(!empty($completionimage))
     {
 $pdf->AddPage();
 /** String */
