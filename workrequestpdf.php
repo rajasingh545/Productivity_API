@@ -232,15 +232,14 @@ if(!empty($vari))
     $location=$vari[0]['location'];
     $description=$vari[0]['description'];
     $drawingAttach=$vari[0]['drawingAttach'];
-    if ($vari[0]['drawingimage'] != '')
+    $drawPic = $vari[0]['drawingimage'];
+    if (!empty($drawPic))
     {
-    $drawingimage="http://".$_SERVER['HTTP_HOST']."/productivity-api/".$vari[0]['drawingimage'];
-    $drawImageArray=explode(",",$vari[0]['drawingimage']);
-    $drawingimage = [];
-    foreach($drawImageArray as $singleImage){
-        //$newImage = "http://".$_SERVER['HTTP_HOST']."/productivity-api/".$singleImage;
-        array_push($drawingimage,$singleImage);
-    }
+        $drawImageArray=explode(",",$drawPic);
+        $drawingimage = [];
+        foreach($drawImageArray as $singleImage){
+            array_push($drawingimage,$singleImage);
+        }
     }
     else{
         $drawingimage="";
@@ -579,12 +578,12 @@ $html = '<br /><br />
 $pdf->writeHTML($html, true, false, true, false, '');
 
 if(!empty($drawingimage)){
-    $imgdisp = '';
+    $drawImgdisp = '';
     foreach($drawingimage as $drawimagepath)
         {
         $pdf->AddPage();	
-        $imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
-        $html='<br /><br /><div style="margin:50px;">'.$imgdisp.'</div>';
+        $drawImgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
+        $html='<br /><br /><div style="margin:50px;">'.$drawImgdisp.'</div>';
         $pdf->writeHTML($html, true, false, true, false, '');
      }
 }
