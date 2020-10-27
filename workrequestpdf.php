@@ -242,7 +242,7 @@ if(!empty($vari))
         }
     }
     else{
-        $drawingimage="";
+        $drawingimage=[];
     }
     $completionimage = array();
     $completionimage=explode(",",$vari[0]['completionImages']);
