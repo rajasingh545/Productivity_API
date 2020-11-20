@@ -583,7 +583,9 @@ if(!empty($drawingimage)){
     foreach($drawingimage as $drawimagepath)
         {
         $pdf->AddPage();	
-        $imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
+       // $imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
+       $imgdisp='<img src="http://productivityapi.vinayak.com.sg/'.$drawimagepath.'" width="300 px" />';
+       
         $html='<br /><br /><div style="margin:50px;">'.$imgdisp.'</div>';
         $pdf->writeHTML($html, true, false, true, false, '');
      }
