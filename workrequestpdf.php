@@ -71,7 +71,8 @@ class MYPDF extends TCPDF {
 			        $usersArr[$key]["scaffoldregister"]="Yes";
 			    else
 			        $usersArr[$key]["scaffoldregister"]="No";
-			    $usersArr[$key]["remarks"]=$value['remarks'];
+			   $usersArr[$key]["remarks"]=$value['remarks'];
+			    $remarks=$value['remarks'];
 			    
 			    $usersArr[$key]["createdOn"]=$value['createdOn'];
                 $usersArr[$key]["drawingimage"]=$value['drawingimage'];
@@ -225,7 +226,8 @@ $imgdisp="";
 if(!empty($vari))
 {
     $createdOn=$vari[0]['createdOn'];
-    $createdOn=date("Y-m-d h:i A",strtotime($createdOn));
+    $remarks=$vari[0]['remarks'];
+    $createdOn=date("d-m-Y",strtotime($createdOn));
     $createdBy=$vari[0]['createdBy'];
     $projectname=$vari[0]['projectname'];
     $clientname=$vari[0]['clientname'];
