@@ -1,6 +1,6 @@
 <?php
 include_once "lib/init.php";
-
+$drawingimage = [];
 if(isset($_GET["workrequestid"]))
 {
     $workrequstid=$_GET["workrequestid"];
@@ -19,7 +19,7 @@ else
     echo json_encode($returnval);
     exit;    
 }
-
+$workrequstNumber=$_GET["workrequstNumber"];
 // Include the main TCPDF library (search for installation path).
 require_once('TCPDF-master/tcpdf_include.php');
 
@@ -29,11 +29,11 @@ class MYPDF extends TCPDF {
     //Page header
     public function Header() {
         // Logo
-        //if ($this->page != 2) {
+        if ($this->page == 1) {
             $image_file = 'TCPDF-master/img/VSS_LH_29062020.jpg';
             $this->Image($image_file, 0, 3, 160, '', 'JPG', '', 'T', false, 300, 'C', false, false, 0, false, false, false);
-        /*}*/
-    }
+        }
+        }
     
     // Page footer
     public function Footer() {
@@ -238,7 +238,7 @@ if(!empty($vari))
     if (!empty($drawPic))
     {
         $drawImageArray=explode(",",$drawPic);
-        $drawingimage = [];
+        
         foreach($drawImageArray as $singleImage){
             array_push($drawingimage,$singleImage);
         }
@@ -423,7 +423,7 @@ $html = '<br /><br />
 	<tr>
 		<td bgcolor="#ebf1de" style="font-size:12px;"><b>Project</b></td>
 		<td>'.$projectname.'</td>
-		<td rowspan="2" colspan="2" align="center" >WR Reference Number<br />'.$wrequestid.'<br /><span style="color:#737574;"><i>(Erection WR Ref.#____________________)</i></span></td>
+		<td rowspan="2" colspan="2" align="center" >WR Reference Number<br />'.$workrequstNumber.'<br /><span style="color:#737574;"><i>(Erection WR Ref.#____________________)</i></span></td>
 	</tr>
 	<tr>
 		<td bgcolor="#ebf1de" style="font-size:12px;"><b>Client</b></td>
@@ -584,8 +584,8 @@ if(!empty($drawingimage)){
     foreach($drawingimage as $drawimagepath)
         {
         $pdf->AddPage();	
-       // $imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
-       $imgdisp='<img src="http://productivityapi.vinayak.com.sg/'.$drawimagepath.'" width="300 px" />';
+        $imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
+       //$imgdisp='<img src="http://productivityapi.vinayak.com.sg/'.$drawimagepath.'" width="300 px" />';
        
         $html='<br /><br /><div style="margin:50px;">'.$imgdisp.'</div>';
         $pdf->writeHTML($html, true, false, true, false, '');
@@ -595,6 +595,9 @@ if(!empty($drawingimage)){
 if(!empty($completionimage))
     {
 $pdf->AddPage();
+$pdf->Image('TCPDF-master/img/VSS_LH_29062020.jpg', 0, 3, 160, '', 'JPG', '', 'T', false, 300, 'C', false, false, 0, false, false, false);
+//$image_file = 'TCPDF-master/img/VSS_LH_29062020.jpg';
+//
 /** String */
 //$pdf->SetXY(110, 200);
 $x=15;
