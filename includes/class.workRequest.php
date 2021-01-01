@@ -19,13 +19,14 @@ class WORKREQUESTS
             //$usersArr[$key]['query']=$whereClauseCount;
             //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
             $str_length = 3; 
-            if ($data['projectCount'] == 0)
+            /*if ($data['projectCount'] == 0)
             {
                 $workRequestCount=1; 
             }else{
                 $workRequestCount=$data['projectCount']; 
 
-            }
+            }*/
+            $workRequestCount=$data['projectCount']+1;
             $workRequestCount  = substr("000{$workRequestCount}", -$str_length);
             //$usersArr[$key]['workReqCount']= $workRequestCount ;
 			$insertArr["projectId"]=trim($postArr["value_projects"]);
@@ -317,7 +318,7 @@ class WORKREQUESTS
             $requesttype=$postArr['requestJsonData']['requestData']['id'];
             $projectid=$postArr['requestJsonData']['selectedProjectData']['projectId'];
             $clientid=$postArr['requestJsonData']['selectedClientData']['clientId'];
-            $workRequestCount = 1;      
+            $workRequestCount = 0;      
 
             if(empty($fromdate))
             {
@@ -389,8 +390,13 @@ class WORKREQUESTS
                     $workRequestCount = mysqli_query($connectionStr, $whereClauseCount);
                     $data=mysqli_fetch_assoc($workRequestCount);
                     $usersArr[$key]['query']=$whereClauseCount;
+                    $usersArr[$key]['data']=$data;
                     //$workRequestCount=$db->execute_query($dbcon,$whereClauseCount);
                     $str_length = 3; 
+                    /*if ($value['wrkArrRunningSeqNo'] > 1)
+                        $wrkCounterVal=$value['wrkArrRunningSeqNo']+1;
+                     else   
+                       $wrkCounterVal=$value['wrkArrRunningSeqNo'];*/
                     $workRequestCount  = substr("000{$value['wrkArrRunningSeqNo']}", -$str_length);
                    // $usersArr[$key]['workReqCount']= $workRequestCount ;
                    $usersArr[$key]['workReqCount']= $workRequestCount ;
