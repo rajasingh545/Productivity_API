@@ -657,7 +657,29 @@ class WORKREQUESTS
                    
                     $this->insertPhotos($postArr, $insid, 0, $postArr["uniqueId"], $dbm, $dbcon);
                 }
-               
+                $currentWorkSubCount = 0;
+                foreach($postArr["itemList"] as $item){
+                    $workRequestId=trim($item["wr_no"]);
+                    $subDivisionId=trim($item["value_subdivision"]);
+                    $currentWorkSubCount =$currentWorkSubCount+trim($item["L"])*trim($item["H"])*trim($item["W"])*trim($item["set"]);
+                }
+                $whereClauseCount = "select length*height*width*setcount as workRequestTotal from p_workrequestsizebased where workRequestId =".$workRequestId;
+                $connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+                $workRequestTotal = mysqli_query($connectionStr, $whereClauseCount);
+                $workRequestTotalCount=mysqli_fetch_assoc($workRequestTotal);
+                $whereClauseCount = "SELECT sum(length*height*width*setcount) as sumTotal  FROM `p_dailyworktracksubdivision` where workRequestId =".$workRequestId." and subDivisionId =".$subDivisionId;
+                $connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+                $sumTotal = mysqli_query($connectionStr, $whereClauseCount);
+                $sumTotalCount=mysqli_fetch_assoc($sumTotal);
+                $returnval["workRequestTotal"]=$workRequestTotalCount["workRequestTotal"];
+                $returnval["sumTotal"]=$sumTotalCount["sumTotal"];
+
+                if(intval($sumTotalCount["sumTotal"])+$currentWorkSubCount > intval($workRequestTotalCount["workRequestTotal"]) )
+                {
+                    $returnval["response"] = intval($workRequestTotalCount["workRequestTotal"])-intval($sumTotalCount["sumTotal"]);
+                    $returnval["responsecode"] = 0;
+                    return $this->common->arrayToJson($returnval);
+                }
                 $insid2 = $this->insertDWTRItemList($postArr,$insid, $dbm, $dbcon);
                 $this->insertDifferentTiming($postArr, $insid, $dbm, $dbcon);
             }
@@ -755,7 +777,8 @@ class WORKREQUESTS
 
     function insertDWTRItemList($postArr, $insid, $dbm, $dbcon){
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-
+        
+        
         foreach($postArr["itemList"] as $item){
 
             $insertArr2["workTrackId"]=$insid;
@@ -1119,8 +1142,8 @@ class WORKREQUESTS
                 $errors="extension not allowed, please choose a JPEG or PNG file.";
             }
             
-            if($file_size > 2097152){
-               $errors='File size must be excately 2 MB';
+            if($file_size > 10526268){
+               $errors='File size must be excately 10 MB';
             }
 
             if(trim($errors) == ""){
