@@ -811,6 +811,10 @@ class commonAPI
 			}
 			
 			foreach($listArr as $works){
+				$whereClauseCount = "select length*height*width*setcount as workRequestTotal from p_workrequestsizebased where workRequestId =".$works["workRequestId"];
+                $connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+                $workRequestTotal = mysqli_query($connectionStr, $whereClauseCount);
+                $workRequestTotalCount=mysqli_fetch_assoc($workRequestTotal);
 			    $worktracklist=[];
 			    $selectFileds3=array("worktrackId");		
 				$whereClause3 = "workRequestId=".$works["workRequestId"];
@@ -836,6 +840,10 @@ class commonAPI
 					{
 						foreach($items as $item)
 						{
+							$whereClauseCount = "SELECT sum(length*height*width*setcount) as sumTotal  FROM `p_dailyworktracksubdivision` where workRequestId =".$works["workRequestId"]." and subDivisionId =".$item["id"];
+							$connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+							$sumTotal = mysqli_query($connectionStr, $whereClauseCount);
+							$sumTotalCount=mysqli_fetch_assoc($sumTotal);
 						    $workdonetotal=0;
                             $selectFileds4=array("length","height","width","setcount");		
                             $whereClause4 = "workTrackId IN(".$worktrackvalue.") and subDivisionId=".$item["id"];
@@ -860,13 +868,18 @@ class commonAPI
 							$setcount=intval($item["setcount"]);
     						$settotal=$length*$width*$height*$setcount;
     						$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item["id"], "itemName"=>$item["ItemUniqueId"],"type"=>"1","desc"=>$desc,"requestBy"=>$works["requestedBy"],
-    						                                                "totalset"=>$settotal,"workdonetotal"=>$workdonetotal);
+    						                                                "totalset"=>$settotal,"workdonetotal"=>$workdonetotal,"workRequstTotal"=>$workRequestTotalCount["workRequestTotal"],"sumTotal"=>$sumTotalCount["sumTotal"]);
     					}
 					}else
 					{
 
 						foreach($items as $item)
 						{
+							$workdonetotal=0;
+							$whereClauseCount = "SELECT sum(length*height*width*setcount) as sumTotal  FROM `p_dailyworktracksubdivision` where workRequestId =".$works["workRequestId"]." and subDivisionId =".$item["id"];
+							$connectionStr = mysqli_connect("localhost", $DBINFO["USERNAME"], $DBINFO["PASSWORD"], $DBNAME["NAME"]);
+							$sumTotal = mysqli_query($connectionStr, $whereClauseCount);
+							$sumTotalCount=mysqli_fetch_assoc($sumTotal);							
 							$desc = "WR: ".$item["length"]."mL x ".$item["width"]."mW x ".$item["height"]."mH"." x ".$item["setcount"];
 							$length=intval($item["length"]);
 							$width=intval($item["width"]);
@@ -874,7 +887,7 @@ class commonAPI
 							$setcount=intval($item["setcount"]);
 							$settotal=$length*$width*$height*$setcount;
 							$resultArrr["items"][$works["workRequestId"]][] = array("itemId"=>$item["id"], "itemName"=>$item["ItemUniqueId"],"type"=>"1","desc"=>$desc,"requestBy"=>$works["requestedBy"],
-																			"totalset"=>$settotal,"workdonetotal"=>$workdonetotal);
+																			"totalset"=>$settotal,"workdonetotal"=>$workdonetotal,"workRequstTotal"=>$workRequestTotalCount["workRequestTotal"],"sumTotal"=>$sumTotalCount["sumTotal"]);
 						}
 					}
 
