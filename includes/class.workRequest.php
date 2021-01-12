@@ -643,8 +643,7 @@ class WORKREQUESTS
            $insertArr["status"] = trim($postArr["listingstatus"]);
            $insertArr["uniqueId"] = trim($postArr["uniqueId"]);
            $insertArr["createdBy"] = trim($postArr["userId"]);
-        
-
+           
 			$dbm = new DB;
 			$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 			
@@ -796,6 +795,7 @@ class WORKREQUESTS
             $insertArr2["cWidth"]=trim($item["cW"]);
             $insertArr2["cSetcount"]=trim($item["cset"]);
             $insertArr2["createdOn"]=date("Y-m-d H:i:s");
+            $insertArr2["workRequestSequence"]=$item["text_subdivision"];
 
             $this->insertPhotos($item, $insid, trim($item["value_subdivision"]), $item["uniqueId"], $dbm, $dbcon);
             
@@ -906,14 +906,15 @@ class WORKREQUESTS
 			    $usersArr[$key]["requestSizeList"]=[];
                 $usersArr[$key]["requestMatList"]=[];                  
 			    $wtrackid=$trackvalue["worktrackId"];
-                $selectFiledsitem=array("id","workRequestId", "subDivisionId","length", "height","width","setcount","status");
+                $selectFiledsitem=array("id","workRequestId", "subDivisionId","length", "height","width","setcount","status","workRequestSequence");
                 $whereClauseitem = "worktrackId='".$wtrackid."'";
                 $resitem=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACKSUBDIVISION"],$selectFiledsitem,$whereClauseitem);
                 if($resitem[1] > 0){
                     $itemList = $db->fetchArray($resitem[0],1);
                     $k=0;
                     foreach($itemList as $item){
-                        $item["WR_text"] = "WR".str_pad($item["workRequestId"], 4, '0', STR_PAD_LEFT);
+                        //$item["WR_text"] = "WR".str_pad($item["workRequestId"], 4, '0', STR_PAD_LEFT);
+                        $item["WR_text"] =$item["workRequestSequence"];
                         if($item["status"]==1){
                             $cstatus="Ongoing";
                         }
