@@ -567,7 +567,7 @@ $html = '<br /><br />
 	    </td>
 	</tr>
 	<tr>
-		<td colspan="4">Remarks:</td>
+		<td colspan="4">Remarks:        '.$remarks.'</td>
 	</tr>
 	<tr bgcolor="#e6b8b7">
 		<td colspan="4"><b>Additional Comments:</b></td>
@@ -583,8 +583,8 @@ if(!empty($drawingimage)){
     $imgdisp = '';
     foreach($drawingimage as $drawimagepath)
         {
-        $pdf->AddPage();	
-       // $imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
+       // $pdf->AddPage();	
+        //$imgdisp='<img src="http://'.$_SERVER['HTTP_HOST'].'/productivity-api/'.$drawimagepath.'" width="300 px"/>';
        $imgdisp='<img src="http://productivityapi.vinayak.com.sg/'.$drawimagepath.'" />';
        
         $html='<br /><br /><div style="margin:50px;">'.$imgdisp.'</div>';
@@ -594,7 +594,7 @@ if(!empty($drawingimage)){
 
 if(!empty($completionimage))
     {
-$pdf->AddPage();
+//$pdf->AddPage();
 $pdf->Image('TCPDF-master/img/VSS_LH_29062020.jpg', 0, 3, 160, '', 'JPG', '', 'T', false, 300, 'C', false, false, 0, false, false, false);
 //$image_file = 'TCPDF-master/img/VSS_LH_29062020.jpg';
 //

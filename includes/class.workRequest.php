@@ -336,7 +336,7 @@ class WORKREQUESTS
                 $addCond.=" and clientId=".$clientid;
             if($postArr['userType'] != 1)
 			{
-				$addCond.="and projectId IN (".$projectList.")";
+				$addCond.=" and projectId IN (".$projectList.")";
 			}
             $whereClause = "status=".$requesttype." and $addCond order by workRequestId desc";
             $selectFileds=array("workRequestId","projectId","clientId","requestedBy","contractType","scaffoldRegister","remarks","description", "status","location","createdBy","createdOn","wrkArrRunningSeqNo");
