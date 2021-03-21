@@ -870,22 +870,47 @@ class WORKREQUESTS
 
     function getDailyWorkTrackList($postArr){
         global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
-		$db = new DB;
+        $db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		
+        $requestdata=$postArr['requestJsonData'];
+        $fromdate="";
+        $enddate="";
+        $projectid="";
+        $clientid="";
+	    if(!empty($requestdata))
+        {
+            $fromdate=$postArr['requestJsonData']['startDate'];
+            $enddate=$postArr['requestJsonData']['endDate'];
+            $requesttype=$postArr['requestJsonData']['requestData']['id'];
+            $projectid=$postArr['requestJsonData']['selectedProjectData']['projectId'];
+            $clientid=$postArr['requestJsonData']['selectedClientData']['clientId'];
+            $supervisorid=$postArr['requestJsonData']['selectedSupervisorData']['userId'];
+        } 
+
 		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","remarks","workRequestId","createdBy","createdOn");
 
 		if($postArr["startDate"] && $postArr["startDate"]!=""){
-			$addCond = "date(createdOn)='".$postArr["startDate"]."'";
+			$addCond = "date(createdOn)>='".$postArr["startDate"]."'";
 		}
 		else{
 			$addCond = "date(createdOn)='".date("Y-m-d")."'";
-		}		
+		}	
+        if($postArr["enddate"] && $postArr["enddate"]!=""){
+			$addCond = " and date(createdOn)<='".$postArr["enddate"]."'";
+		}
+        if(!empty($projectid))
+                $addCond.=" and projectId='".$projectid."'";
+        if(!empty($clientid))
+         $addCond.=" and clientId='".$clientid."'";
+       if(!empty($supervisorid))
+         $addCond.=" and supervisor='".$supervisorid."'"; 
+
 		$whereClause = "status=".$postArr["requestType"]." AND $addCond order by workRequestId desc";
 		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$selectFileds,$whereClause);
 		// pr($db);
 		$usersArr = array();
+        $usersArr["select query"]=$whereClause;
 		if($res[1] > 0){
 			$usersArr = $db->fetchArray($res[0], 1);
 			foreach($usersArr as $key=>$trackvalue)
