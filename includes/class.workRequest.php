@@ -877,6 +877,7 @@ class WORKREQUESTS
         $enddate="";
         $projectid="";
         $clientid="";
+        $status="";
 	    if(!empty($requestdata))
         {
             $fromdate=$postArr['requestJsonData']['startDate'];
@@ -885,6 +886,7 @@ class WORKREQUESTS
             $projectid=$postArr['requestJsonData']['selectedProjectData']['projectId'];
             $clientid=$postArr['requestJsonData']['selectedClientData']['clientId'];
             $supervisorid=$postArr['requestJsonData']['selectedSupervisorData']['userId'];
+	    $status=$postArr['requestJsonData']['selectedStatusData']['id'];
         } 
 
 		$selectFileds=array("worktrackId","projectId","clientId","requestedBy","remarks","workRequestId","createdBy","createdOn");
@@ -904,8 +906,9 @@ class WORKREQUESTS
          $addCond.=" and clientId='".$clientid."'";
        if(!empty($supervisorid))
          $addCond.=" and supervisor='".$supervisorid."'"; 
-
-		$whereClause = "status=".$postArr["requestType"]." AND $addCond order by workRequestId desc";
+       if(!empty($postArr["requestType"]))
+          $status=$postArr["requestType"];
+		$whereClause = "status=".$status." AND $addCond order by workRequestId desc";
 		
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DAILYWORKTRACK"],$selectFileds,$whereClause);
 		// pr($db);
