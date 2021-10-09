@@ -347,6 +347,8 @@ class WORKREQUESTS
     			foreach($usersArr as $key=>$value)
     			{
     			    $usersArr[$key]["workbasedon"]="";
+                    $usersArr[$key]["Requested_By"]=$value['requestedBy'];
+                    $usersArr[$key]["Dismantle_Date"]="";
                     $usersArr[$key]["requestSizeList"]=[];
                     $usersArr[$key]["requestmanpower"]=[];
                     
@@ -429,13 +431,14 @@ class WORKREQUESTS
                         foreach($itemList as $item){
                             if($item["workBased"] == 1){
                                 $usersArr[$key]["workbasedon"]="Size";
-                                $selectFiledsSize=array("id","itemListId","scaffoldType","scaffoldWorkType","scaffoldSubCategory","length","height", "width","setcount");
+                                $selectFiledsSize=array("id","itemListId","scaffoldType","scaffoldWorkType","scaffoldSubCategory","ItemUniqueId","length","height", "width","setcount");
                                 $whereClauseSize = "workRequestId='".$wrequestid."' and itemListId=".$item["id"];
                                 $resSize=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["WORKREQUESTSIZEBASED"],$selectFiledsSize,$whereClauseSize);
                                 if($resSize[1] > 0){
                                     $sizeList = $db->fetchArray($resSize[0],1);
                                     $i=0;
                                     foreach($sizeList as $sizeDet){
+                                        $usersArr[$key]["WR"]=$sizeDet['ItemUniqueId'];
                                         $scaffoldworktype=$sizeDet['scaffoldWorkType'];
                         			    $selectFiledsitem=array("scaffoldName");
                                         $whereClauseitem = "id=".$scaffoldworktype;
@@ -443,6 +446,11 @@ class WORKREQUESTS
                                         if($resitem_in[1] > 0){
                                             $itemList_in = $db->fetchArray($resitem_in[0]);
                                             $usersArr[$key]["requestSizeList"][$a]["scaffoldworktype"]=$itemList_in['scaffoldName'];
+                                            $usersArr[$key]["EDM"]=$itemList_in['scaffoldName'];
+                                            $usersArr[$key]["COVO"]="";
+                                            $usersArr[$key]["Grid_Line"]="";
+                                            $usersArr[$key]["Location"]="";
+
                                         }
                                         $scaffoldtype=$sizeDet['scaffoldType'];
                         			    $selectFiledsitem=array("scaffoldName");
@@ -452,6 +460,7 @@ class WORKREQUESTS
                                             $itemList_in = $db->fetchArray($resitem_in[0]);
                                             $scaffoldtypename=$itemList_in['scaffoldName'];
                                             $usersArr[$key]["requestSizeList"][$a]["scaffoldtype"]=$itemList_in['scaffoldName'];
+                                            $usersArr[$key]["scaffoldtype"]=$itemList_in['scaffoldName'];
                                         }
                                         $scaffoldsubcategory=$sizeDet['scaffoldSubCategory'];
                         			    $selectFiledsitem=array("scaffoldSubCatName");
@@ -462,6 +471,10 @@ class WORKREQUESTS
                                             $usersArr[$key]["requestSizeList"][$a]["scaffoldsubcategory"]=$itemList_in['scaffoldSubCatName'];
                                         }
                                         $usersArr[$key]["requestSizeList"][$a]["size"]=$scaffoldtypename."-".$sizeDet['length']."mL x ".$sizeDet['width']."mW x ".$sizeDet['height']."mH"." x ".$sizeDet['setcount']." No's";
+                                        $usersArr[$key]["mL"]=$sizeDet['length'];
+                                        $usersArr[$key]["mW"]=$sizeDet['width'];
+                                        $usersArr[$key]["mH"]=$sizeDet['height'];
+                                        $usersArr[$key]["Nos"]=$sizeDet['setcount'];
                                         $a++;
                                     }
                                 }
@@ -1006,6 +1019,73 @@ class WORKREQUESTS
 		// pr($usersArr);
  
 		return $this->common->arrayToJson($usersArr);
+    }
+    function getWorkRequestExcel($postArr){
+        $getdata = $this->getWorkRequestListDate($postArr);
+        $data = json_decode($getdata, TRUE);
+        $dataarry = array();
+
+        foreach($data as $key=>$value){
+            $dataarry[$key]["WR"] = $value[workRequestId];
+            $dataarry[$key]["Requested By"] = $value[requestedBy];
+            $dataarry[$key]["Erection Date"] = date('d-m-Y', strtotime($value[createdOn])); ;
+            $dataarry[$key]["Dismantle Date"] = "";
+            $dataarry[$key]["Type of Scaffold "] = $value[scaffoldtype];
+            $dataarry[$key]["E/D/M"] = $value[EDM];
+            $dataarry[$key]["CO/VO"] = $value[COVO];
+            $dataarry[$key]["Grid Line"] = "";
+            $dataarry[$key]["Location"] = $value[location];
+            $dataarry[$key]["Description / Purpose"] = $value[description];
+            $dataarry[$key]["mL"] = $value[mL];
+            $dataarry[$key]["mW"] = $value[mW];
+            $dataarry[$key]["mH"] = $value[mH];
+            $dataarry[$key]["No's"] = $value[Nos];
+            $dataarry[$key]["Volume"] = "";
+            $dataarry[$key]["Erection/ Dismantle WR Ref.#"] = "";
+
+        }
+
+        $columnHeader = '';  
+        $columnHeader = "WR" . "\t" . "Requested By" . "\t" . "Erection Date" . "\t" . "location" . "\t" . "requestedBy" . "\t" . "createdOn" . "\t";  
+        $setData = '';   
+            $rowData = '';  
+            foreach ($data[0] as $value) {  
+                $value = '"' . $value . '"' . "\t";  
+                $rowData .= $value; 
+
+            }  
+            $setData .= trim($rowData) . "\n";  
+            // $csvdata['WR'] = $data[0][workRequestId];
+            // $csvdata['Requested By'] = '';
+            // $csvdata['Erection Date'] = '';
+            // $csvdata['requestedBy'] = $data[0][requestedBy];
+            // $csvdata['location'] = $data[0][location];
+            // $csvdata['createdOn'] = $data[0][createdOn];
+            // $csvdata['WR'] = $data[0][workRequestId];
+            // print_r($csvdata);
+            // exit; 
+
+        // header("Content-type: application/octet-stream");  
+        // header("Content-Disposition: attachment; filename=User_Detail.xls");  
+        // header("Pragma: no-cache");  
+        // header("Expires: 0");  
+
+        // echo ucwords($columnHeader) . "\n" . $setData . "\n";
+        $filename = "data_export_".date('Ymd') . ".xls";			
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=\"$filename\"");	
+        $show_coloumn = false;
+        foreach($dataarry as $record) {
+            if(!$show_coloumn) {
+            // display field/column names in first row
+            echo implode("\t", array_keys($record)) . "\n";
+            $show_coloumn = true;
+            }
+            echo implode("\t", array_values($record)) . "\n";
+        }
+        exit;  
+
+
     }
 
     function getDailyWorkTrackDetails($postArr){
